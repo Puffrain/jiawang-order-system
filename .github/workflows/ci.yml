@@ -47,8 +47,16 @@ jobs:
         run: |
           pnpm run typecheck
           pnpm run lint
-          pnpm run test:regression
           pnpm run build
+          pnpm start > /tmp/jiawang-order-ci.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null
+          pnpm run test:regression
       - name: Verify warehouse system
         working-directory: 佳旺仓库系统
         env:
