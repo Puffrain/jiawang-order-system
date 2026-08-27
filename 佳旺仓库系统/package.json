@@ -1,0 +1,51 @@
+{
+  "name": "jiawang-warehouse",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "tsx scripts/bootstrap.ts --migrate",
+    "db:bootstrap": "tsx scripts/bootstrap.ts --admin",
+    "worker": "tsx worker/index.ts",
+    "healthcheck:worker": "tsx scripts/worker-healthcheck.ts",
+    "test:platform": "tsx scripts/self-test.ts",
+    "test:config": "tsx scripts/config-smoke.ts",
+    "test:migration-021": "node --test tests/domain/migration-021-node-sqlite.test.mjs",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@node-rs/argon2": "2.0.2",
+    "better-sqlite3": "^11.10.0",
+    "exceljs": "^4.4.0",
+    "next": "^15.4.6",
+    "pino": "^9.6.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sharp": "^0.34.1",
+    "yauzl": "^3.2.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/yauzl": "^2.10.3",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.25.1",
+    "eslint-config-next": "^15.4.6",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

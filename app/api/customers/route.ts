@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import db from "@/lib/db";
+import { requireApiRole } from "@/lib/auth";
+export async function GET(){const auth=await requireApiRole("owner");if(auth.response)return auth.response;const customers=db.prepare(`SELECT u.id,u.display_name displayName,u.phone,u.status,u.created_at createdAt,p.shop_name shopName,p.shop_address shopAddress,p.business_type businessType,p.customer_level customerLevel,p.internal_remark internalRemark,COUNT(DISTINCT CASE WHEN o.deleted_at IS NULL THEN o.id END) orderCount,COALESCE(SUM(CASE WHEN o.deleted_at IS NULL THEN o.total_amount ELSE 0 END),0) totalPurchased,MAX(CASE WHEN o.deleted_at IS NULL THEN o.created_at END) lastOrderAt FROM users u LEFT JOIN customer_profile p ON p.user_id=u.id LEFT JOIN orders o ON o.buyer_user_id=u.id WHERE u.role='buyer' GROUP BY u.id ORDER BY u.created_at DESC`).all();return NextResponse.json({customers},{headers:{"Cache-Control":"no-store, max-age=0"}});}

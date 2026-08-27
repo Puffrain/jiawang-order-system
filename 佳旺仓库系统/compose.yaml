@@ -1,0 +1,142 @@
+name: jiawang-warehouse
+
+services:
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/db/app.sqlite
+      DATABASE_URL: file:/data/db/app.sqlite
+      DATA_DIR: /data
+      MEDIA_DIR: /media
+      TEMP_DIR: /data/tmp
+      TMPDIR: /data/tmp
+      BACKUP_OUT_DIR: /data/backups
+      PIPELINE_MEDIA_ROOT: /media
+      APP_ORIGIN: ${APP_ORIGIN:-https://www.kunshanjiawang.cn}
+      REQUIRE_ORIGIN: ${REQUIRE_ORIGIN:-true}
+      REQUIRE_CSRF: ${REQUIRE_CSRF:-true}
+      APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-${DEEPSEEK_VISION_MODEL:-}}
+      DEEPSEEK_VISION_MODEL: ${DEEPSEEK_VISION_MODEL:-${DEEPSEEK_MODEL:-}}
+      DEEPSEEK_TEXT_MODEL: ${DEEPSEEK_TEXT_MODEL:-}
+      DEEPSEEK_MODELS_PATH: ${DEEPSEEK_MODELS_PATH:-/models}
+      DEEPSEEK_CHAT_PATH: ${DEEPSEEK_CHAT_PATH:-/chat/completions}
+      DEEPSEEK_INPUT_FORMAT: ${DEEPSEEK_INPUT_FORMAT:-${DEEPSEEK_INPUT_MODE:-data_url}}
+      DEEPSEEK_INPUT_MODE: ${DEEPSEEK_INPUT_MODE:-${DEEPSEEK_INPUT_FORMAT:-data_url}}
+      DEEPSEEK_ALLOWED_HOSTS: ${DEEPSEEK_ALLOWED_HOSTS:-}
+      DEEPSEEK_TIMEOUT_MS: ${DEEPSEEK_TIMEOUT_MS:-60000}
+      DEEPSEEK_MAX_TOKENS: ${DEEPSEEK_MAX_TOKENS:-1024}
+      DEEPSEEK_PRICE_VERSION: ${DEEPSEEK_PRICE_VERSION:-}
+      DEEPSEEK_PROMPT_PRICE_MINOR: ${DEEPSEEK_PROMPT_PRICE_MINOR:-0}
+      DEEPSEEK_COMPLETION_PRICE_MINOR: ${DEEPSEEK_COMPLETION_PRICE_MINOR:-0}
+      DEEPSEEK_CURRENCY: ${DEEPSEEK_CURRENCY:-CNY}
+      DEEPSEEK_PRICE_TABLE: ${DEEPSEEK_PRICE_TABLE:-}
+      PIPELINE_TASK_TOKEN_LIMIT: ${PIPELINE_TASK_TOKEN_LIMIT:-${AI_JOB_TOKEN_LIMIT:-100000}}
+      PIPELINE_DAILY_TOKEN_LIMIT: ${PIPELINE_DAILY_TOKEN_LIMIT:-${AI_DAILY_TOKEN_LIMIT:-1000000}}
+      PIPELINE_COST_PER_TOKEN_MINOR: ${PIPELINE_COST_PER_TOKEN_MINOR:-0}
+    volumes:
+      - app_data:/data
+      - media_data:/media
+      - backup_data:/data/backups
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    stop_grace_period: 30s
+
+  worker:
+    build:
+      context: .
+      target: worker
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/db/app.sqlite
+      DATABASE_URL: file:/data/db/app.sqlite
+      DATA_DIR: /data
+      MEDIA_DIR: /media
+      TEMP_DIR: /data/tmp
+      TMPDIR: /data/tmp
+      BACKUP_OUT_DIR: /data/backups
+      PIPELINE_MEDIA_ROOT: /media
+      APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
+      REQUIRE_ORIGIN: ${REQUIRE_ORIGIN:-true}
+      REQUIRE_CSRF: ${REQUIRE_CSRF:-true}
+      MEDIA_ROOT: /media
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-${DEEPSEEK_VISION_MODEL:-}}
+      DEEPSEEK_VISION_MODEL: ${DEEPSEEK_VISION_MODEL:-${DEEPSEEK_MODEL:-}}
+      DEEPSEEK_TEXT_MODEL: ${DEEPSEEK_TEXT_MODEL:-}
+      DEEPSEEK_MODELS_PATH: ${DEEPSEEK_MODELS_PATH:-/models}
+      DEEPSEEK_CHAT_PATH: ${DEEPSEEK_CHAT_PATH:-/chat/completions}
+      DEEPSEEK_INPUT_FORMAT: ${DEEPSEEK_INPUT_FORMAT:-${DEEPSEEK_INPUT_MODE:-data_url}}
+      DEEPSEEK_INPUT_MODE: ${DEEPSEEK_INPUT_MODE:-${DEEPSEEK_INPUT_FORMAT:-data_url}}
+      DEEPSEEK_ALLOWED_HOSTS: ${DEEPSEEK_ALLOWED_HOSTS:-}
+      DEEPSEEK_TIMEOUT_MS: ${DEEPSEEK_TIMEOUT_MS:-60000}
+      DEEPSEEK_MAX_TOKENS: ${DEEPSEEK_MAX_TOKENS:-1024}
+      DEEPSEEK_PRICE_VERSION: ${DEEPSEEK_PRICE_VERSION:-}
+      DEEPSEEK_PROMPT_PRICE_MINOR: ${DEEPSEEK_PROMPT_PRICE_MINOR:-0}
+      DEEPSEEK_COMPLETION_PRICE_MINOR: ${DEEPSEEK_COMPLETION_PRICE_MINOR:-0}
+      DEEPSEEK_CURRENCY: ${DEEPSEEK_CURRENCY:-CNY}
+      DEEPSEEK_PRICE_TABLE: ${DEEPSEEK_PRICE_TABLE:-}
+      PIPELINE_TASK_TOKEN_LIMIT: ${PIPELINE_TASK_TOKEN_LIMIT:-${AI_JOB_TOKEN_LIMIT:-100000}}
+      PIPELINE_DAILY_TOKEN_LIMIT: ${PIPELINE_DAILY_TOKEN_LIMIT:-${AI_DAILY_TOKEN_LIMIT:-1000000}}
+      PIPELINE_COST_PER_TOKEN_MINOR: ${PIPELINE_COST_PER_TOKEN_MINOR:-0}
+    volumes:
+      - app_data:/data
+      - media_data:/media
+      - backup_data:/data/backups
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "--import", "tsx", "scripts/worker-healthcheck.ts"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    stop_grace_period: 30s
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./proxy/proxy-common.inc:/etc/nginx/conf.d/proxy-common.inc:ro
+      - ${TLS_CERT_DIR:-./proxy/certs}:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  # Named volumes are stored by Docker/WSL2, not in the OneDrive source tree.
+  app_data:
+  media_data:
+  backup_data:

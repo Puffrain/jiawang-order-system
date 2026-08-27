@@ -1,0 +1,48 @@
+佳旺美容美发用品店 - 系统入口地址
+
+当前公网地址（备案审核期间使用 HTTP）
+==================================================
+
+【客户入口】
+客户二维码和注册入口：
+http://kunshanjiawang.cn/customer-entry
+
+客户登录：
+http://kunshanjiawang.cn/buyer/login
+
+客户商城：
+http://kunshanjiawang.cn/buyer
+
+【商户入口】
+商户登录：
+http://kunshanjiawang.cn/admin/login
+
+商户后台：
+http://kunshanjiawang.cn/admin
+
+客户二维码管理（商户登录后访问）：
+http://kunshanjiawang.cn/admin/customer-qr
+
+【其他入口】
+系统首页：
+http://kunshanjiawang.cn/
+
+健康检查：
+http://kunshanjiawang.cn/api/health
+
+按钮诊断页（仅商户可访问）：
+http://kunshanjiawang.cn/diagnostics/buttons
+
+上线资料页（仅商户可访问）：
+http://kunshanjiawang.cn/setup-guide
+
+【正式 HTTPS 地址】
+备案通过并完成 HTTPS 配置后，将上面的 http:// 统一替换为 https://。
+
+正式客户入口：
+https://kunshanjiawang.cn/customer-entry
+
+正式商户登录：
+https://kunshanjiawang.cn/admin/login
+
+注意：不要把商户账号密码、服务器密码、SESSION_SECRET 或其他密钥写入或转发到此文件中。

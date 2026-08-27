@@ -1,0 +1,13 @@
+services:
+  order-web:
+    image: jiawang-commerce-order:deploy
+    build: null
+  order-media-worker:
+    image: jiawang-commerce-order:deploy
+    build: null
+  warehouse-web:
+    image: jiawang-commerce-warehouse-web:deploy
+    build: null
+  warehouse-worker:
+    image: jiawang-commerce-warehouse-worker:deploy
+    build: null

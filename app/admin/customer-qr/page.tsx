@@ -1,0 +1,2 @@
+import { headers } from "next/headers";import{redirect}from"next/navigation";import CustomerEntryClient from "@/components/customer-entry-client";import{ownerOrNull}from"@/lib/auth-guards";
+export default async function CustomerQrPage(){if(!await ownerOrNull())redirect("/admin/login");const h=await headers();const host=h.get("x-forwarded-host")||h.get("host")||"localhost:3000";const protocol=h.get("x-forwarded-proto")||(host.includes("localhost")?"http":"https");return <CustomerEntryClient origin={`${protocol}://${host}`}/>}

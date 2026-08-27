@@ -1,0 +1,23 @@
+node_modules/
+.pnpm-store/
+.next/
+.local/
+*.tsbuildinfo
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+# Runtime state directories at the repository root.  Keep these patterns
+# anchored so source folders such as app/api/v1/admin/backups remain tracked.
+/data/
+/tmp/
+/backups/
+*.sqlite
+*.sqlite-*
+*.jwbackup
+*.log
+test-results/
+playwright-report/
+proxy/certs/*
+!proxy/certs/.gitkeep

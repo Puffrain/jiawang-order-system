@@ -1,0 +1,15 @@
+node_modules
+.next
+.next-*
+.git
+.pnpm-store
+.local
+data
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+coverage
+dist
+*.tsbuildinfo
