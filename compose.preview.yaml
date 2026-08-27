@@ -14,7 +14,7 @@ x-warehouse-environment: &warehouse_environment
   APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN}
   REQUIRE_ORIGIN: "true"
   REQUIRE_CSRF: "true"
-  APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
+  APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}
   INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
   ORDER_INTERNAL_URL: http://order-web:3000
   DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -32,6 +32,7 @@ services:
       DATABASE_URL: file:/data/app.db
       UPLOAD_DIR: /data/uploads
       NODE_ENV: production
+      SESSION_COOKIE_SECURE: "false"
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
       OWNER_PHONE: ${OWNER_PHONE:?set OWNER_PHONE}
       OWNER_PHONE_ALIASES: ${OWNER_PHONE_ALIASES:-}
@@ -73,17 +74,26 @@ services:
       warehouse-web:
         condition: service_healthy
 
+  warehouse-volume-init:
+    image: ${WAREHOUSE_WEB_CANDIDATE_IMAGE:?set WAREHOUSE_WEB_CANDIDATE_IMAGE}
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/db /data/tmp /data/backups /media && chown -R 1000:1000 /data /media"]
+    restart: "no"
+    volumes: &warehouse_volumes
+      - warehouse_data:/data
+      - warehouse_media:/media
+
   warehouse-web:
     image: ${WAREHOUSE_WEB_CANDIDATE_IMAGE:?set WAREHOUSE_WEB_CANDIDATE_IMAGE}
     restart: unless-stopped
     environment: *warehouse_environment
-    volumes: &warehouse_volumes
-      - warehouse_data:/data
-      - warehouse_media:/media
+    volumes: *warehouse_volumes
     expose: ["3000"]
     depends_on:
       order-web:
         condition: service_started
+      warehouse-volume-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/warehouse/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

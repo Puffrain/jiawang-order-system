@@ -352,7 +352,6 @@ function createProductWithinLease(input: BeautyProductInput, auditEvent?: AuditE
     if (auditEvent) recordAuditWithDb(db, { ...auditEvent, resourceId: id });
     const product = getProduct(id);
     if (!product) throw new Error('商品保存失败');
-    enqueueOrderProduct(product);
   });
   const product = getProduct(id);
   if (!product) throw new Error('商品保存失败');

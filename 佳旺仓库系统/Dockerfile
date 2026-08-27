@@ -42,5 +42,3 @@ COPY . .
 RUN mkdir -p /data/db /data/tmp /data/backups /media && chown -R node:node /app /data /media
 USER node
 CMD ["node", "--import", "tsx", "worker/index.ts"]
-
-

@@ -1,6 +1,18 @@
 name: jiawang-warehouse
 
 services:
+  volume-init:
+    build:
+      context: .
+      target: web
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/db /data/tmp /data/backups /media && chown -R 1000:1000 /data /media"]
+    restart: "no"
+    volumes: &warehouse_volumes
+      - app_data:/data
+      - media_data:/media
+      - backup_data:/data/backups
+
   web:
     build:
       context: .
@@ -19,10 +31,10 @@ services:
       TMPDIR: /data/tmp
       BACKUP_OUT_DIR: /data/backups
       PIPELINE_MEDIA_ROOT: /media
-      APP_ORIGIN: ${APP_ORIGIN:-https://www.kunshanjiawang.cn}
+      APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN to the public HTTPS origin}
       REQUIRE_ORIGIN: ${REQUIRE_ORIGIN:-true}
       REQUIRE_CSRF: ${REQUIRE_CSRF:-true}
-      APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
+      APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}
       BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -45,14 +57,14 @@ services:
       PIPELINE_TASK_TOKEN_LIMIT: ${PIPELINE_TASK_TOKEN_LIMIT:-${AI_JOB_TOKEN_LIMIT:-100000}}
       PIPELINE_DAILY_TOKEN_LIMIT: ${PIPELINE_DAILY_TOKEN_LIMIT:-${AI_DAILY_TOKEN_LIMIT:-1000000}}
       PIPELINE_COST_PER_TOKEN_MINOR: ${PIPELINE_COST_PER_TOKEN_MINOR:-0}
-    volumes:
-      - app_data:/data
-      - media_data:/media
-      - backup_data:/data/backups
+    volumes: *warehouse_volumes
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/warehouse/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -76,7 +88,8 @@ services:
       TMPDIR: /data/tmp
       BACKUP_OUT_DIR: /data/backups
       PIPELINE_MEDIA_ROOT: /media
-      APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
+      APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}
+      APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN to the public HTTPS origin}
       REQUIRE_ORIGIN: ${REQUIRE_ORIGIN:-true}
       REQUIRE_CSRF: ${REQUIRE_CSRF:-true}
       MEDIA_ROOT: /media
@@ -100,10 +113,7 @@ services:
       PIPELINE_TASK_TOKEN_LIMIT: ${PIPELINE_TASK_TOKEN_LIMIT:-${AI_JOB_TOKEN_LIMIT:-100000}}
       PIPELINE_DAILY_TOKEN_LIMIT: ${PIPELINE_DAILY_TOKEN_LIMIT:-${AI_DAILY_TOKEN_LIMIT:-1000000}}
       PIPELINE_COST_PER_TOKEN_MINOR: ${PIPELINE_COST_PER_TOKEN_MINOR:-0}
-    volumes:
-      - app_data:/data
-      - media_data:/media
-      - backup_data:/data/backups
+    volumes: *warehouse_volumes
     depends_on:
       web:
         condition: service_healthy
@@ -130,7 +140,7 @@ services:
       - ./proxy/proxy-common.inc:/etc/nginx/conf.d/proxy-common.inc:ro
       - ${TLS_CERT_DIR:-./proxy/certs}:/etc/nginx/certs:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://127.0.0.1/warehouse/api/health >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5

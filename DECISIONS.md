@@ -1,16 +1,28 @@
 # Confirmed Decisions
 
-## 2026-08-20 sync repair and replay boundaries
+## 2026-08-27 接管和版本管理
 
-- Only the exact current warehouse revision may repair a damaged Outbox payload, and only while pending or dead.
-- Delivered and superseded payloads are immutable and cannot be replayed through the protected current-version operation.
-- Repair audit stores a classified reason plus old/new SHA-256 values, never damaged payload bytes.
-- Media Worker tests use optional file-operation injection and a single-poll export; production defaults remain the real filesystem and long-running polling loop.
+- 当前目录作为待审计候选版，保留现有功能，不以旧线上版本覆盖。
+- 创建新私有仓库 `Puffrain/jiawang-order-system`；旧 `Puffrain/kunshanjiawang` 保持不动。
+- 首轮优先安全与发布基线，不主动改业务 API 或数据模型。
+- 生产上线采用“预览后逐次批准”；每个候选版需要老板单独明确批准。
+- 无批准时不连接生产、不创建生产备份、不修改容器或数据卷。
 
-## Deployment approval gate
+## 不可变安全边界
 
-- Effective from 2026-08-16.
-- Before every production deployment, prepare and show a local or isolated preview to the user.
-- Do not change production until the user explicitly confirms that the preview is approved for deployment.
-- A request to implement, inspect, or preview is not deployment approval.
-- If the deployed result differs from the approved preview, stop further production changes, diagnose the mismatch, and present a corrected preview before redeploying.
+- 生产数据库、WAL/SHM、媒体、备份、`.env`、凭据和证书不进 GitHub。
+- 生产数据卷永不在发布中删除、重建或替换。
+- 主密钥延用现有 `APP_MASTER_KEY`；任何变更必须先有密文迁移方案，发布预检默认阻断变更。
+- 实现者不能是唯一 reviewer 或 acceptance。
+
+## 2026-08-28 商品录入方向
+
+- 当前以人工录入商品为主要生产流程，优先保证商品图片、分类、规格、SKU、价格、库存、人工审核、发布和订单同步完整可用。
+- AI 配置、能力探测和相关接口保留，首轮不继续扩展，也不作为正式基线和生产发布的关键验收项。
+- AI 未配置或不可用不得阻断人工录入、人工审核和人工发布。
+- 未经老板新的明确决定，不投入时间新增 AI 模型、提示词、自动识别或用量功能。
+
+## 2026-08-28 生产只读盘点边界
+
+- 本轮只允许查看服务器状态和生产数据元信息；不下载、不备份、不修改、不迁移、不删除商品数据库或媒体。
+- 盘点发现的备份、文件权限、防火墙、SSH 和系统更新问题必须分别说明影响并取得老板批准后再整改。

@@ -6,7 +6,7 @@ const productionVolumes = new Set([
   "jiawang-commerce-new-warehouse-media",
 ]);
 const requiredVolumes = new Set(["order_data", "warehouse_data", "warehouse_media"]);
-const requiredServices = new Set(["order-web", "order-media-worker", "warehouse-web", "warehouse-worker", "gateway"]);
+const requiredServices = new Set(["order-web", "order-media-worker", "warehouse-volume-init", "warehouse-web", "warehouse-worker", "gateway"]);
 
 const raw = fs.readFileSync(0, "utf8");
 const config = JSON.parse(raw);
@@ -26,7 +26,7 @@ for (const [serviceName, service] of Object.entries(config.services)) {
     if (productionVolumes.has(mount.source)) throw new Error(`${serviceName} mounts production volume ${mount.source}`);
   }
 }
-for (const serviceName of ["order-web", "order-media-worker", "warehouse-web", "warehouse-worker"]) {
+for (const serviceName of ["order-web", "order-media-worker", "warehouse-volume-init", "warehouse-web", "warehouse-worker"]) {
   const service = config.services[serviceName];
   if (!service.image || service.build) throw new Error(`${serviceName} must use a prebuilt immutable candidate image`);
   if (!/(?:^sha256:|@sha256:)[a-f0-9]{64}$/.test(service.image)) throw new Error(`${serviceName} candidate image must use an immutable digest`);

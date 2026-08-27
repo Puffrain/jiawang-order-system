@@ -8,10 +8,11 @@ services:
       DATABASE_URL: file:/data/app.db
       UPLOAD_DIR: /data/uploads
       NODE_ENV: production
-      SESSION_SECRET: ${SESSION_SECRET:-}
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
       OWNER_PHONE: ${OWNER_PHONE:-13806265100}
       OWNER_PHONE_ALIASES: ${OWNER_PHONE_ALIASES:-}
-      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:?set OWNER_PASSWORD}
       OWNER_NAME: ${OWNER_NAME:-老板}
       SMS_PROVIDER: ${SMS_PROVIDER:-aliyun}
       SMS_PREVIEW_MODE: ${SMS_PREVIEW_MODE:-false}
@@ -20,7 +21,7 @@ services:
       ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:-}
       ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:-}
       ALIYUN_SMS_REGION_ID: ${ALIYUN_SMS_REGION_ID:-cn-hangzhou}
-      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:-}
+      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
       WECOM_BOT_WEBHOOK_URL: ${WECOM_BOT_WEBHOOK_URL:-}
       WECOM_BOT_MENTION_MOBILE: ${WECOM_BOT_MENTION_MOBILE:-}
       WAREHOUSE_INTERNAL_URL: http://warehouse-web:3000
@@ -36,7 +37,7 @@ services:
       DATABASE_URL: file:/data/app.db
       UPLOAD_DIR: /data/uploads
       NODE_ENV: production
-      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:-}
+      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
       WAREHOUSE_INTERNAL_URL: http://warehouse-web:3000
       MEDIA_WORKER_POLL_MS: ${MEDIA_WORKER_POLL_MS:-30000}
       MEDIA_WORKER_BATCH_SIZE: ${MEDIA_WORKER_BATCH_SIZE:-4}
@@ -47,6 +48,19 @@ services:
         condition: service_started
       warehouse-web:
         condition: service_healthy
+
+  warehouse-volume-init:
+    build:
+      context: ./佳旺仓库系统
+      target: web
+      args:
+        NEXT_PUBLIC_BASE_PATH: /warehouse
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/db /data/tmp /data/backups /media && chown -R 1000:1000 /data /media"]
+    restart: "no"
+    volumes: &warehouse_volumes
+      - warehouse_data:/data
+      - warehouse_media:/media
 
   warehouse-web:
     build:
@@ -66,11 +80,11 @@ services:
       TMPDIR: /data/tmp
       BACKUP_OUT_DIR: /data/backups
       PIPELINE_MEDIA_ROOT: /media
-      APP_ORIGIN: ${APP_ORIGIN:-https://www.kunshanjiawang.cn}
+      APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN to the public HTTPS origin}
       REQUIRE_ORIGIN: "true"
       REQUIRE_CSRF: "true"
-      APP_MASTER_KEY: ${APP_MASTER_SECRET:-}
-      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:-}
+      APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}
+      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
       ORDER_INTERNAL_URL: http://order-web:3000
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
@@ -78,11 +92,13 @@ services:
       DEEPSEEK_TEXT_MODEL: ${DEEPSEEK_TEXT_MODEL:-}
       DEEPSEEK_VISION_MODEL: ${DEEPSEEK_VISION_MODEL:-}
       DEEPSEEK_ALLOWED_HOSTS: ${DEEPSEEK_ALLOWED_HOSTS:-}
-    volumes: &warehouse_volumes
-      - warehouse_data:/data
-      - warehouse_media:/media
+    volumes: *warehouse_volumes
     expose: ["3000"]
-    depends_on: [order-web]
+    depends_on:
+      order-web:
+        condition: service_started
+      warehouse-volume-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/warehouse/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

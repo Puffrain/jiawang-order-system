@@ -25,7 +25,7 @@ const warehouseProxy = fs.readFileSync(nodePath.join(root, "佳旺仓库系统/p
 const orderSave = fs.readFileSync(nodePath.join(root, "lib/product-catalog.ts"), "utf8");
 assert.ok(orderProxy.includes('pathname.startsWith("/api/internal/")'), "order proxy must allow HMAC-authenticated internal routes without a browser session");
 assert.ok(warehouseProxy.includes("pathname.startsWith('/warehouse/api/internal/')"), "warehouse proxy must keep service calls outside browser Origin enforcement");
-assert.match(orderSave, /owned.warehouseVariantId[\s\S]*UPDATE product_skus SET base_price=/, "order edits must not overwrite warehouse stock");
+assert.match(orderSave, /if \(owned\.warehouseVariantId\)[\s\S]*sku\.stock !== current\.stock[\s\S]*WAREHOUSE_SKU_MANAGED/, "order edits must reject changes to warehouse-managed SKU price and stock");
 assert.match(orderSave, /WAREHOUSE_SKU_MANAGED/, "warehouse SKU membership must be protected server-side");
 
 const db = new Database(":memory:");

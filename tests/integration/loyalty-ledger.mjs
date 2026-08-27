@@ -17,7 +17,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS orders(id TEXT PRIMARY KEY, order_no TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS loyalty_accounts(user_id TEXT PRIMARY KEY REFERENCES users(id), balance_points INTEGER NOT NULL DEFAULT 0 CHECK(balance_points >= 0), updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
   CREATE TABLE IF NOT EXISTS order_loyalty(order_id TEXT PRIMARY KEY REFERENCES orders(id),user_id TEXT NOT NULL REFERENCES users(id),gross_amount_fen INTEGER NOT NULL,reserved_points INTEGER NOT NULL DEFAULT 0,redeemed_points INTEGER NOT NULL DEFAULT 0,redemption_fen INTEGER NOT NULL DEFAULT 0,cash_payable_fen INTEGER NOT NULL,earned_points INTEGER NOT NULL DEFAULT 0,state TEXT NOT NULL DEFAULT 'reserved',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
-  CREATE TABLE IF NOT EXISTS loyalty_ledger(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,order_id TEXT,event_type TEXT NOT NULL,points_delta INTEGER NOT NULL,balance_after INTEGER NOT NULL,amount_fen INTEGER,event_key TEXT NOT NULL UNIQUE,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE IF NOT EXISTS loyalty_ledger(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,points INTEGER NOT NULL,balance_after INTEGER NOT NULL,kind TEXT NOT NULL,order_id TEXT,note TEXT,event_type TEXT NOT NULL DEFAULT 'earn',points_delta INTEGER NOT NULL DEFAULT 0,amount_fen INTEGER,event_key TEXT UNIQUE,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
   INSERT OR IGNORE INTO users(id) VALUES('buyer');
   INSERT OR IGNORE INTO loyalty_accounts(user_id,balance_points) VALUES('buyer',500);
 `);

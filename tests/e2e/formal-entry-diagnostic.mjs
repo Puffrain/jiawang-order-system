@@ -19,7 +19,7 @@ for (const path of routes) {
     }
     assert.equal(response.status, 200, `${path} 访问失败：${JSON.stringify(chain)}`);
     const body = await response.text();
-    if (path === "/") assert.match(body, /欢迎来到批发商城/, "首页不是客户商城入口");
+    if (path === "/") assert.match(body, /佳旺美容美发用品店[\s\S]*客户登录/, "首页不是客户登录入口");
     if (path === "/admin" || path === "/admin/login") assert.match(body, /老板登录/, "后台未进入老板登录页");
     if (path === "/api/health") assert.deepEqual(JSON.parse(body), { ok: true });
     if (item.contentType.includes("text/html")) {

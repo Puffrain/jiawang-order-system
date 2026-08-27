@@ -18,6 +18,7 @@
     "healthcheck:worker": "tsx scripts/worker-healthcheck.ts",
     "test:platform": "tsx scripts/self-test.ts",
     "test:config": "tsx scripts/config-smoke.ts",
+    "test:deployment-config": "node scripts/deployment-config-smoke.mjs",
     "test:migration-021": "node --test tests/domain/migration-021-node-sqlite.test.mjs",
     "test": "node --import tsx --test \"tests/**/*.test.ts\""
   },

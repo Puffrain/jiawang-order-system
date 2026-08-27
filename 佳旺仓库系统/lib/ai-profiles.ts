@@ -127,6 +127,11 @@ export function saveAIProfile(input: AIProfileInput, id?: string) {
       (id, profile_id, revision, encrypted_config, created_at) VALUES (?, ?, ?, ?, ?)`)
       .run(revisionId, profileId, revision, encryptJson(config), now);
     db.prepare('UPDATE ai_profiles SET active_revision_id = ? WHERE id = ?').run(revisionId, profileId);
+    if (!id) {
+      db.prepare(`INSERT INTO active_ai_profile (singleton, profile_id, revision_id, updated_at)
+        VALUES (1, ?, ?, ?) ON CONFLICT(singleton) DO NOTHING`)
+        .run(profileId, revisionId, now);
+    }
   });
   return listAIProfiles().find((profile) => profile.id === profileId)!;
 }

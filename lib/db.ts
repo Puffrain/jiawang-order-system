@@ -11,9 +11,15 @@ const filePath = databasePath();
 fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
 const db = new Database(filePath, { timeout: 5000 });
+db.pragma("busy_timeout = 10000");
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+// Web, workers and Next build workers may cold-start against the same file.
+// Serialize the complete bootstrap so guarded ALTER TABLE statements cannot
+// race after two processes observe the same pre-migration schema.
+db.exec("BEGIN IMMEDIATE");
+try {
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY, phone TEXT UNIQUE, role TEXT NOT NULL DEFAULT 'buyer',
@@ -249,6 +255,11 @@ ensureColumn("warehouse_media_sync", "lease_expires_at", "TEXT");
 ensureColumn("warehouse_media_sync", "completed_at", "TEXT");
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_warehouse_media_product ON warehouse_media_sync(product_id)");
 db.exec("CREATE INDEX IF NOT EXISTS idx_warehouse_media_due ON warehouse_media_sync(status,next_attempt_at,lease_expires_at)");
+db.exec("COMMIT");
+} catch (error) {
+  try { db.exec("ROLLBACK"); } catch { /* Preserve the bootstrap error. */ }
+  throw error;
+}
 
 export function getDb() { return db; }
 export default db;

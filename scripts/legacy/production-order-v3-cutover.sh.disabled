@@ -1,4 +1,5 @@
 #!/bin/sh
+# HISTORICAL ONLY. DO NOT EXECUTE. See scripts/legacy/README.md.
 set -eu
 
 app_dir=/opt/jiawang-commerce-new

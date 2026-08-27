@@ -39,8 +39,8 @@ function balance(db: SqliteDb, userId: string): number {
 }
 
 function ledger(db: SqliteDb, input: { userId: string; orderId: string; eventType: "reserve" | "release" | "commit" | "earn" | "refund_restore"; delta: number; balanceAfter: number; amountFen?: number; eventKey: string }): void {
-  db.prepare("INSERT INTO loyalty_ledger(id,user_id,order_id,event_type,points_delta,balance_after,amount_fen,event_key) VALUES(?,?,?,?,?,?,?,?)")
-    .run(randomUUID(), input.userId, input.orderId, input.eventType, input.delta, input.balanceAfter, input.amountFen ?? null, input.eventKey);
+  db.prepare("INSERT INTO loyalty_ledger(id,user_id,order_id,points,kind,event_type,points_delta,balance_after,amount_fen,event_key) VALUES(?,?,?,?,?,?,?,?,?,?)")
+    .run(randomUUID(), input.userId, input.orderId, input.delta, input.eventType, input.eventType, input.delta, input.balanceAfter, input.amountFen ?? null, input.eventKey);
 }
 
 export function reserveOrderPoints(db: SqliteDb, input: { orderId: string; userId: string; grossAmountFen: number; pointsToUse: number }): { points: number; discountFen: number; cashPayableFen: number } {

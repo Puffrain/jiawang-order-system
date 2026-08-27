@@ -1,22 +1,48 @@
 #!/bin/sh
 set -eu
 
-app_dir=/opt/jiawang-commerce-new
-before=$(sha256sum "$app_dir/.env" | cut -d' ' -f1)
-cp -a /tmp/jiawang-commerce-sync-20260818/. "$app_dir/"
-install -m 644 /tmp/production.env.template "$app_dir/production.env.template"
-after=$(sha256sum "$app_dir/.env" | cut -d' ' -f1)
-test "$before" = "$after"
-echo ENV_UNCHANGED
+: "${PRODUCTION_DEPLOY_APPROVED:?set PRODUCTION_DEPLOY_APPROVED=true only after owner approval}"
+: "${APPROVAL_REFERENCE:?set APPROVAL_REFERENCE}"
+: "${RELEASE_ID:?set RELEASE_ID}"
+: "${BACKUP_DIR:?set BACKUP_DIR from production-deploy-backup.sh}"
+test "$PRODUCTION_DEPLOY_APPROVED" = true || { echo OWNER_APPROVAL_REQUIRED >&2; exit 43; }
+case "$RELEASE_ID" in *[!a-zA-Z0-9._-]*|'') echo "invalid RELEASE_ID" >&2; exit 2;; esac
 
-docker rm -f jw-media-fix-worker jw-media-fix-warehouse >/dev/null 2>&1 || true
-docker network rm jw-media-fix-net >/dev/null 2>&1 || true
-docker cp /tmp/production-data-check.cjs jiawang-commerce-order-web-1:/app/production-data-check.cjs
-docker exec -e UPLOAD_DIR=/data/uploads jiawang-commerce-order-web-1 node /app/production-data-check.cjs order /data/app.db
-docker exec jiawang-commerce-order-web-1 rm -f /app/production-data-check.cjs
+PROJECT_NAME=${PROJECT_NAME:-jiawang-commerce}
+ORDER_CONTAINER=${ORDER_CONTAINER:-${PROJECT_NAME}-order-web-1}
+ORDER_WORKER_CONTAINER=${ORDER_WORKER_CONTAINER:-${PROJECT_NAME}-order-media-worker-1}
+WAREHOUSE_WEB_CONTAINER=${WAREHOUSE_WEB_CONTAINER:-${PROJECT_NAME}-warehouse-web-1}
+WAREHOUSE_WORKER_CONTAINER=${WAREHOUSE_WORKER_CONTAINER:-${PROJECT_NAME}-warehouse-worker-1}
+HEALTH_BASE_URL=${HEALTH_BASE_URL:-http://127.0.0.1:8080}
+LOG_SINCE=${LOG_SINCE:-10m}
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
-for container in jiawang-commerce-order-web-1 jiawang-commerce-order-media-worker-1 jiawang-commerce-warehouse-web-1 jiawang-commerce-warehouse-worker-1; do
-  echo "LOG_CHECK=$container"
-  docker logs --since 5m "$container" 2>&1 | grep -Ei 'error|fatal|exception|failed' || true
+command -v docker >/dev/null 2>&1 || { echo DOCKER_UNAVAILABLE >&2; exit 3; }
+command -v curl >/dev/null 2>&1 || { echo CURL_UNAVAILABLE >&2; exit 3; }
+command -v sha256sum >/dev/null 2>&1 || { echo SHA256SUM_UNAVAILABLE >&2; exit 3; }
+test -f "$BACKUP_DIR/SHA256SUMS"
+(cd "$BACKUP_DIR" && sha256sum -c SHA256SUMS)
+curl -fsS "$HEALTH_BASE_URL/api/health" >/dev/null
+curl -fsS "$HEALTH_BASE_URL/warehouse/api/health" >/dev/null
+
+for container in "$ORDER_CONTAINER" "$ORDER_WORKER_CONTAINER" "$WAREHOUSE_WEB_CONTAINER" "$WAREHOUSE_WORKER_CONTAINER"; do
+  test "$(docker inspect "$container" --format '{{.State.Status}}')" = running
 done
-df -h /
+
+cleanup() {
+  docker exec "$ORDER_CONTAINER" rm -f /app/production-data-check.cjs >/dev/null 2>&1 || true
+  docker exec "$WAREHOUSE_WORKER_CONTAINER" rm -f /app/production-data-check.cjs >/dev/null 2>&1 || true
+}
+trap cleanup EXIT INT TERM
+docker cp "$SCRIPT_DIR/production-data-check.cjs" "$ORDER_CONTAINER:/app/production-data-check.cjs"
+docker cp "$SCRIPT_DIR/production-data-check.cjs" "$WAREHOUSE_WORKER_CONTAINER:/app/production-data-check.cjs"
+docker exec -e UPLOAD_DIR=/data/uploads "$ORDER_CONTAINER" node /app/production-data-check.cjs order /data/app.db
+docker exec "$WAREHOUSE_WORKER_CONTAINER" node /app/production-data-check.cjs warehouse /data/db/app.sqlite
+cleanup
+trap - EXIT INT TERM
+
+for container in "$ORDER_CONTAINER" "$ORDER_WORKER_CONTAINER" "$WAREHOUSE_WEB_CONTAINER" "$WAREHOUSE_WORKER_CONTAINER"; do
+  echo "LOG_CHECK=$container"
+  docker logs --since "$LOG_SINCE" "$container" 2>&1 | grep -Ei 'error|fatal|exception|failed' || true
+done
+printf 'FINALIZE_PASS RELEASE_ID=%s APPROVAL_REFERENCE=%s\n' "$RELEASE_ID" "$APPROVAL_REFERENCE"

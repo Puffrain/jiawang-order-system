@@ -105,6 +105,11 @@ const eslintConfig = defineConfig([
     "scripts/**/*.cjs",
     "out/**",
     "build/**",
+    ".task-backups/**",
+    ".task-runs/**",
+    "output/**",
+    "data/**",
+    "uploads/**",
     "next-env.d.ts",
   ]),
   {

@@ -1,13 +1,16 @@
 services:
   order-web:
-    image: jiawang-commerce-order:deploy
+    image: ${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}
     build: null
   order-media-worker:
-    image: jiawang-commerce-order:deploy
+    image: ${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}
+    build: null
+  warehouse-volume-init:
+    image: ${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE to an immutable image ID or repository digest}
     build: null
   warehouse-web:
-    image: jiawang-commerce-warehouse-web:deploy
+    image: ${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE to an immutable image ID or repository digest}
     build: null
   warehouse-worker:
-    image: jiawang-commerce-warehouse-worker:deploy
+    image: ${WAREHOUSE_WORKER_IMAGE:?set WAREHOUSE_WORKER_IMAGE to an immutable image ID or repository digest}
     build: null

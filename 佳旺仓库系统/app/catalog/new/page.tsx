@@ -118,6 +118,7 @@ function ManualProductContent() {
   const [editingProduct, setEditingProduct] = useState<ProductRecord | null>(null);
   const [loadingProduct, setLoadingProduct] = useState(Boolean(editProductId));
   const previewUrls = useRef(new Set<string>());
+  const dirtyRef = useRef(false);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -148,6 +149,7 @@ function ManualProductContent() {
         // only submit their processed derivatives back to the catalog.
         const editableAssetIds = product.publishedAssetIds?.length ? product.publishedAssetIds : product.assetIds || [];
         setImages(editableAssetIds.map((assetId, index) => ({ localId: localId("image"), previewUrl: `${basePath}/api/v1/media/${encodeURIComponent(assetId)}`, status: "prepared", progress: 100, assetId, label: `已保存图片 ${index + 1}` })));
+        dirtyRef.current = false;
         setDirty(false);
       } catch (cause) { if (!cancelled) setError(apiErrorMessage(cause, "商品资料无法读取")); }
       finally { if (!cancelled) setLoadingProduct(false); }
@@ -156,10 +158,10 @@ function ManualProductContent() {
     return () => { cancelled = true; };
   }, [editProductId]);
   useEffect(() => {
-    const handler = (event: BeforeUnloadEvent) => { if (dirty && !success) event.preventDefault(); };
+    const handler = (event: BeforeUnloadEvent) => { if (dirtyRef.current) event.preventDefault(); };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [dirty, success]);
+  }, []);
   useEffect(() => {
     const urls = previewUrls.current;
     return () => { for (const url of urls) URL.revokeObjectURL(url); };
@@ -174,11 +176,13 @@ function ManualProductContent() {
   const currentCategory = categories.find((category) => category.id === form.subcategoryId) || categories.find((category) => category.id === form.categoryId);
 
   function setField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
+    dirtyRef.current = true;
     setDirty(true);
     setForm((current) => ({ ...current, [key]: value, ...(key === "categoryId" ? { subcategoryId: "" } : {}) }));
   }
 
   function setVariant(localIdValue: string, patch: Partial<VariantForm>) {
+    dirtyRef.current = true;
     setDirty(true);
     setVariants((current) => current.map((variant) => variant.localId === localIdValue ? { ...variant, ...patch } : variant));
   }
@@ -187,6 +191,7 @@ function ManualProductContent() {
     const next = emptyVariant();
     setVariants((current) => [...current, next]);
     setSelectedVariantId(next.localId);
+    dirtyRef.current = true;
     setDirty(true);
   }
 
@@ -209,6 +214,7 @@ function ManualProductContent() {
     setSelectedVariantId(result.generated[0].localId);
     setBulkColors("");
     setError(null);
+    dirtyRef.current = true;
     setDirty(true);
   }
 
@@ -217,6 +223,7 @@ function ManualProductContent() {
     const next = variants.filter((variant) => variant.localId !== localIdValue);
     setVariants(next);
     if (selectedVariantId === localIdValue) setSelectedVariantId(next[0].localId);
+    dirtyRef.current = true;
     setDirty(true);
   }
 
@@ -233,13 +240,14 @@ function ManualProductContent() {
       previewUrls.current.add(previewUrl);
       accepted.push({ localId: localId("image"), file, previewUrl, status: "ready", progress: 0 });
     }
-    if (accepted.length) { setImages((current) => [...current, ...accepted]); setDirty(true); }
+    if (accepted.length) { dirtyRef.current = true; setImages((current) => [...current, ...accepted]); setDirty(true); }
   }
 
   function removeImage(localIdValue: string) {
     const image = images.find((item) => item.localId === localIdValue);
     if (image) { URL.revokeObjectURL(image.previewUrl); previewUrls.current.delete(image.previewUrl); }
     setImages((current) => current.filter((item) => item.localId !== localIdValue));
+    dirtyRef.current = true;
     setDirty(true);
   }
 
@@ -247,12 +255,14 @@ function ManualProductContent() {
     const target = index + direction;
     if (target < 0 || target >= images.length) return;
     setImages((current) => { const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; return next; });
+    dirtyRef.current = true;
     setDirty(true);
   }
 
   function setPrimaryImage(index: number) {
     if (index <= 0 || index >= images.length) return;
     setImages((current) => [current[index], ...current.slice(0, index), ...current.slice(index + 1)]);
+    dirtyRef.current = true;
     setDirty(true);
   }
 
@@ -327,6 +337,7 @@ function ManualProductContent() {
         : await apiJson<unknown>("/api/v1/catalog/products", "POST", payload);
       const product = created && typeof created === "object" && "product" in created ? (created as { product?: ProductRecord }).product : undefined;
       if (!product) throw new Error("服务端没有返回已保存商品");
+      dirtyRef.current = false;
       setSuccess(product); setDirty(false);
       if (mode === "review") window.location.assign(`${basePath}/catalog`);
     } catch (cause) { setError(apiErrorMessage(cause, "商品保存失败")); }

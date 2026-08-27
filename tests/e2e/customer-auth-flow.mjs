@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 const baseUrl=process.env.BASE_URL||"http://127.0.0.1:3000";
 const phone=`135${String(Date.now()).slice(-8)}`,password="CustomerPass123!",newPassword="CustomerPass456!";
 const testIp=`198.51.100.${Number(String(Date.now()).slice(-2))%200+1}`;
-async function request(path,body,cookie="",origin=baseUrl){const headers={"Content-Type":"application/json",Origin:origin,"X-Forwarded-For":testIp};if(cookie)headers.Cookie=cookie;const response=await fetch(`${baseUrl}${path}`,{method:"POST",redirect:"manual",headers,body:JSON.stringify(body)});const text=await response.text();let json={};try{json=JSON.parse(text)}catch{}return{response,json,cookie:response.headers.get("set-cookie")?.split(";")[0]||""};}
+async function request(path,body,cookie="",origin=baseUrl){const headers={"Content-Type":"application/json",Origin:origin,"X-Forwarded-For":testIp};if(cookie)headers.Cookie=cookie;const response=await fetch(`${baseUrl}${path}`,{method:"POST",redirect:"manual",headers,body:JSON.stringify(body)});const text=await response.text();let json={};try{json=JSON.parse(text)}catch{}return{response,json,cookie:response.headers.getSetCookie().map(value=>value.split(";")[0]).join("; ")};}
 async function sendCode(purpose){const result=await request("/api/auth/buyer/send-code",{phone,purpose});assert.equal(result.response.status,200,JSON.stringify(result.json));assert.ok(result.json.developmentCode,"该测试需在开发环境运行");return result.json;}
 let result=await request("/api/auth/buyer/password-login",{phone,password});assert.equal(result.response.status,401);
 const access=await sendCode("buyer_access");

@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            佳旺仓库系统/pnpm-lock.yaml
+      - name: Install order dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install warehouse dependencies
+        working-directory: 佳旺仓库系统
+        run: pnpm install --frozen-lockfile
+      - name: Static security and deployment contracts
+        run: |
+          pnpm run scan:secrets
+          pnpm run test:deployment-config
+          pnpm run validate:compose-build
+          node tests/integration/isolated-preview-compose-contract.mjs
+          node tests/integration/candidate-release-scripts-contract.mjs
+          APP_ORIGIN=https://ci.invalid APP_MASTER_KEY=0123456789abcdef0123456789abcdef SESSION_SECRET=0123456789abcdef0123456789abcdef INTEGRATION_SHARED_SECRET=abcdef0123456789abcdef0123456789 OWNER_PASSWORD=ci-only-password docker compose -f compose.yaml config --quiet
+      - name: Verify order system
+        env:
+          SESSION_SECRET: 0123456789abcdef0123456789abcdef
+          OWNER_PASSWORD: ci-only-password
+          INTEGRATION_SHARED_SECRET: abcdef0123456789abcdef0123456789
+          APP_MASTER_KEY: 0123456789abcdef0123456789abcdef
+          APP_ORIGIN: https://ci.invalid
+        run: |
+          pnpm run typecheck
+          pnpm run lint
+          pnpm run test:regression
+          pnpm run build
+      - name: Verify warehouse system
+        working-directory: 佳旺仓库系统
+        env:
+          APP_ORIGIN: https://ci.invalid
+          APP_MASTER_KEY: 0123456789abcdef0123456789abcdef
+          INTEGRATION_SHARED_SECRET: abcdef0123456789abcdef0123456789
+          NEXT_PUBLIC_BASE_PATH: /warehouse
+        run: |
+          pnpm run typecheck
+          pnpm run lint
+          pnpm run test:deployment-config
+          pnpm run test:config
+          pnpm run test:platform
+          pnpm run test:migration-021
+          pnpm run test
+          pnpm run build
+      - name: Build immutable candidate images
+        run: |
+          docker build --pull=false --tag jiawang-commerce-order:ci .
+          docker build --pull=false --target web --build-arg NEXT_PUBLIC_BASE_PATH=/warehouse --tag jiawang-commerce-warehouse-web:ci ./佳旺仓库系统
+          docker build --pull=false --target worker --tag jiawang-commerce-warehouse-worker:ci ./佳旺仓库系统
+          docker image inspect jiawang-commerce-order:ci jiawang-commerce-warehouse-web:ci jiawang-commerce-warehouse-worker:ci --format '{{.Id}}' | grep -E '^sha256:[0-9a-f]{64}$'

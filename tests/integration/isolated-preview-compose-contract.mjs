@@ -10,6 +10,9 @@ for (const suffix of ["order-data", "warehouse-data", "warehouse-media"]) {
 }
 assert.doesNotMatch(preview, /jiawang-commerce-new-(?:order-data|warehouse-data|warehouse-media)/);
 assert.doesNotMatch(preview, /^s*build:/m);
+assert.match(preview, /warehouse-volume-init:/);
+assert.match(preview, /condition:\s*service_completed_successfully/);
+assert.match(preview, /chown -R 1000:1000 \/data \/media/);
 assert.ok(validator.includes("productionVolumes.has(mount.source)"));
 assert.ok(validator.includes("!service.image || service.build"));
 assert.match(validator, /@sha256:/);
@@ -25,7 +28,7 @@ assert.doesNotMatch(runner, /down -v|volume prune|docker volume rm/);
 
 const digest = `app@sha256:${"a".repeat(64)}`;
 const config = {
-  services: Object.fromEntries(["order-web", "order-media-worker", "warehouse-web", "warehouse-worker", "gateway"].map((name) => [name, {
+  services: Object.fromEntries(["order-web", "order-media-worker", "warehouse-volume-init", "warehouse-web", "warehouse-worker", "gateway"].map((name) => [name, {
     ...(name === "gateway" ? {} : { image: digest }),
     volumes: [],
   }])),

@@ -17,7 +17,7 @@ import type { NextResponse } from "next/server";
 export const IFRAME_SAFE_COOKIE_OPTS = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.SESSION_COOKIE_SECURE !== "false" && process.env.NODE_ENV === "production",
   path: "/",
 };
 

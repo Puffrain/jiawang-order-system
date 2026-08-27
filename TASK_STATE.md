@@ -1,34 +1,69 @@
 # Task State
 
-## 2026-08-23 发布构建与资料保存验收
+## 2026-08-28 生产商品库只读下载
 
-### 已完成
+资源等级：标准
+状态：执行中
+授权范围：用户已明确要求从当前已连接服务器下载商品库信息和照片；仅允许只读盘点、创建临时一致性快照、传输和本地验证，不允许部署、改库、改容器配置或改生产业务文件。
+边界复核：本轮用户最新明确授权仅为查看服务器。下载、快照、备份或传输生产商品数据仍需老板另行明确批准；当前任务尚未附加已连接的终端会话。
+目标目录：`output/server-product-library-<timestamp>/`（Git 排除）
+验收项：数据库完整性、商品相关表计数、媒体数量与字节数、逐文件 SHA-256、归档可读性。
 
-- 固定发布失败证据：平台日志在 `load local bake definitions` 后、项目 Dockerfile 步骤前终止。
-- 连续失败根因相同：BuildKit 内部 `x-docker-expose-session-sharedkey` 含不可打印字符，gRPC 会话无法建立。
-- 新增 `pnpm run validate:compose-build`，不读取或输出密钥，检查四服务上下文、Dockerfile target、启动文件、健康路径、入口标签和镜像复用关系。
-- 订单 Web 与媒体 Worker 复用根镜像；仓库 Web/Worker 分别使用 `web` / `worker` target；gateway 为唯一入口。
-- 客户资料更新不再强依赖旧库时间字段；旧数据库连续初始化两次、连续保存两次、SQLite `quick_check` 均通过。
-- 首次资料、重复编辑、多地址、默认地址切换及下单前拦截通过。
-- 根项目类型检查、生产构建、安全回归、路由资源检查、SQLite 安全检查和源码发布契约检查通过。
+## 2026-08-27 首次规范接管
 
-### 当前限制
+资源等级：重型
+状态：实施和验收中
+生产：保持不变
 
-- 沙箱中没有 Docker/Podman，不能宣称 Compose `config`、镜像构建、容器启动、healthcheck、隔离命名卷和备份恢复演练已通过。
-- 平台 BuildKit 内部会话头不是项目环境变量，项目代码不能也不应修改它。
-- `git not found` 是构建元数据警告，不是镜像构建阻塞。
+### 证据
 
-### 下一发布动作
+- 随包 431 个文件全部存在；接管前 51 个文件指纹与随包清单不同，只标记为待审计变更。
+- `.task-backups/20260827-baseline-before/` 包含 466 个源码/配置文件及哈希清单，复核通过。
+- 已有本地 Git 导入提交和未验证标签；未验证标签不是发布标签。
+- GitHub 目标已确认为新私有仓库 `Puffrain/jiawang-order-system`。
 
-1. 平台清理并重新生成只含可打印字符的 BuildKit 会话密钥。
-2. 重试发布；若能进入 Dockerfile 步骤，再按具体 Dockerfile/依赖错误处理。
-3. 若仍在同一握手位置失败，停止业务代码修改并转平台基础设施处理。
-4. 在具备 Docker 的隔离 Node 20/Linux 环境完成 `HANDOFF.md` 所列容器级验收，不访问或重建生产数据和命名卷。
+### 实施内容
 
-### 本轮回归结果
+- 收口 `.gitignore` 和自动秘密扫描。
+- `APP_ORIGIN` 和 `APP_MASTER_KEY` 在两套 Compose 中改为必填，Origin/CSRF 继续强制开启。
+- 仓库独立 Compose/Nginx 健康和登录路径统一为 `/warehouse` base path。
+- 生产脚本必须提供发布编号、不可变镜像、备份目录和老板批准记录；失败时恢复旧 Compose。
+- GitHub Actions 固定 Node 20，覆盖两套系统的静态检查、测试和构建。
 
-- `pnpm run validate:compose-build`：PASS；明确提示当前沙箱没有 Docker。
-- 根项目 `typecheck`、`build`、`test:security`、`test:router-chunks`、客户资料旧库与地址流程：PASS。
-- 仓库 `typecheck`、`test:config`、`test:platform`、`test:migration-021`、`lint`：PASS；lint 为 0 errors、15 warnings。
-- 仓库全量测试：75 pass / 2 fail；失败仍为既有 AI profiles 与 manual product routes 业务测试，未因发布配置修改而扩大。
-- `sqlite_safety_lint` 与 `source_contract_lint`：PASS。
+### 尚未完成
+
+- 本地完整验证、候选镜像构建、全新卷预览和备份恢复演练。
+- 独立 reviewer/acceptance 结论。
+- 审计后正式提交、`baseline-v1` 标签、GitHub 私库推送和分支保护。
+- 老板尚未批准任何生产部署，不得连接生产主机。
+
+### 2026-08-28 验证进展
+
+- 修复历史 `loyalty_ledger.points/kind` 必填列与新积分字段不兼容；Node 20 Linux 回归及隔离预览订单完整流程通过。
+- 修复首次 AI 档案未建立激活指针，以及手工商品审核前提前生成订单同步事件。
+- 仓库 Node 20 Linux 测试 `77/77` 通过；订单/仓库跨系统契约通过。
+- 隔离预览运行于 `http://127.0.0.1:3113`，五个服务运行，使用三套独立命名卷。
+- 当前候选镜像摘要：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:ed4ccf92...1cfb`、仓库 Worker `sha256:e17012c5...0b1`。
+- 客户登录桌面浏览器检查无水平溢出，控制台零错误。
+- 远端只读盘点 `BLOCKED`：当前 Codex 任务未附加用户已连接的终端。独立 reviewer/acceptance `BLOCKED`：子代理工具持续返回参数解析错误。
+- 老板确认当前主要采用人工录入；AI 配置和接口保留，但暂停进一步开发，不列为本轮关键验收项。
+
+### 2026-08-28 阿里云只读盘点
+
+- 已经老板明确授权并使用其指定 SSH 私钥入口只读连接；未执行部署、备份、下载、数据库写入、权限修改、服务重启或数据清理。
+- 生产五个容器均运行约 3 天；订单和仓库健康接口均返回 200，仓库数据库报告 17 个迁移。
+- 订单与仓库 SQLite `quick_check=ok`。仓库有 22 个已发布商品、22 个规格、50 条图片关联；订单端有 22 个在售商品和 1 个历史停售商品，均为仓库托管。
+- 三个生产卷存在：订单数据、仓库数据、仓库媒体；仓库媒体约 100 个文件、51 MB。
+- 同步队列 85 条均为 delivered，商品数量差异是 1 条历史停售记录，不是当前同步遗漏。
+- 风险：未发现自动业务数据备份计划或现有业务备份文件；`compose.yaml` 权限为 666；UFW 未启用；SSH 允许 root 公钥登录且 X11 转发启用；系统提示 80 个待更新包。
+- 上述风险仅记录，尚未获批整改；阿里云安全组状态未在主机内核对。
+
+### 2026-08-28 人工录入最终检查点
+
+- 修复仓库命名卷根目录不可写：三套 Compose 增加一次性权限初始化，只调整 `/data` 与 `/media` 所有权，不删除、清空或替换文件。
+- 修复人工商品保存成功后仍触发离开页面确认框；新镜像浏览器回归无弹窗。
+- 人工商品全链路通过：图片、规格、价格、库存、待审核、人工批准、发布、订单同步、媒体同步和客户展示。审核前 outbox=0。
+- 仓库 Node 20 Linux 全量测试 78/78；两套类型检查通过；Lint 均 0 error；静态部署、秘密和发布契约通过。
+- 当前镜像：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:caf46970...a33a`、仓库 Worker `sha256:708676d5...a556`。
+- 备份恢复、SQLite `quick_check=ok`、两次迁移和手机/桌面浏览器检查通过。
+- 独立 reviewer/acceptance 仍 BLOCKED：子代理平台持续返回参数解析 EOF。正式提交、`baseline-v1`、GitHub 推送和生产发布未执行。

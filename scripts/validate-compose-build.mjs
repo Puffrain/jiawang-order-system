@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const failures = [];
@@ -33,17 +34,24 @@ requireText("compose.preview.yaml", "WAREHOUSE_WORKER_CANDIDATE_IMAGE");
 requireText("compose.images.yaml", "order-media-worker");
 
 const compose = exists("compose.yaml") ? read("compose.yaml") : "";
+const warehouseCompose = exists("佳旺仓库系统/compose.yaml") ? read("佳旺仓库系统/compose.yaml") : "";
 if ((compose.match(/services:/g) || []).length !== 1) failures.push("compose.yaml must contain one services section");
 if (compose.includes("ports:")) warnings.push("compose.yaml contains ports; verify only gateway exposes host access");
-if (compose.includes("${APP_MASTER_KEY")) failures.push("compose.yaml uses unsupported APP_MASTER_KEY interpolation");
-if (!compose.includes("APP_MASTER_KEY: ${APP_MASTER_SECRET:-}")) failures.push("compose.yaml must map APP_MASTER_SECRET to APP_MASTER_KEY with a default");
+for (const [file, content] of [["compose.yaml", compose], ["佳旺仓库系统/compose.yaml", warehouseCompose]]) {
+  if (!content.includes("APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN to the public HTTPS origin}")) failures.push(`${file} must require APP_ORIGIN`);
+  if (!content.includes("APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}")) failures.push(`${file} must require APP_MASTER_KEY`);
+  if (!content.includes("REQUIRE_ORIGIN:") || !content.includes("REQUIRE_CSRF:")) failures.push(`${file} must keep origin and CSRF checks enabled`);
+}
 
 const log = process.argv.slice(2).join(" ") || "";
 const platformHandshake = /x-docker-expose-session-sharedkey|failed to dial gRPC|error reading preface from client/i.test(log);
 if (platformHandshake) {
   console.log("PLATFORM_BUILD_SESSION_FAILURE: BuildKit handshake failed before Dockerfile execution; regenerate the platform session key.");
 }
-if (!process.env.CI && !process.env.DOCKER_HOST && !fs.existsSync("/var/run/docker.sock")) warnings.push("docker unavailable in this environment; Compose config/build/health checks remain unexecuted");
+if (!process.env.CI) {
+  const docker = spawnSync(process.platform === "win32" ? "docker.exe" : "docker", ["info", "--format", "{{.ServerVersion}}"], { encoding: "utf8" });
+  if (docker.status !== 0) warnings.push("docker unavailable in this environment; Compose config/build/health checks remain unexecuted");
+}
 if (failures.length) { console.error("PROJECT_BUILD_BASELINE_FAIL"); for (const item of failures) console.error(`- ${item}`); process.exit(1); }
 console.log("PROJECT_BUILD_BASELINE_PASS");
 console.log("services: order-web, order-media-worker, warehouse-web(web target), warehouse-worker(worker target), gateway");

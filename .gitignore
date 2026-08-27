@@ -45,3 +45,24 @@ next-env.d.ts
 data/
 /uploads/
 *.log
+
+# takeover, release and runtime state
+/.task-backups/
+/.task-runs/
+/.local/
+/backups/
+/tmp/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.jwbackup
+*.pem
+*.key
+*.p12
+*.pfx
+test-results/
+playwright-report/
+/output/playwright/
+/.playwright-cli/

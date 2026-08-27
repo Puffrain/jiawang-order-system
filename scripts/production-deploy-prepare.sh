@@ -1,30 +1,50 @@
 #!/bin/sh
 set -eu
 
-command -v docker >/dev/null 2>&1 || { echo DOCKER_UNAVAILABLE; exit 3; }
-docker compose version >/dev/null 2>&1 || { echo DOCKER_COMPOSE_UNAVAILABLE; exit 3; }
+: "${RELEASE_ID:?set RELEASE_ID}"
+: "${CANDIDATE_DIR:?set CANDIDATE_DIR to the reviewed source candidate}"
+: "${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}"
+: "${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE to an immutable image ID or repository digest}"
+: "${WAREHOUSE_WORKER_IMAGE:?set WAREHOUSE_WORKER_IMAGE to an immutable image ID or repository digest}"
+APP_DIR=${APP_DIR:-/opt/jiawang-commerce-new}
+DEPLOY_OVERRIDE=${DEPLOY_OVERRIDE:-/tmp/compose.deploy-${RELEASE_ID}.yaml}
+PROJECT_NAME=${PROJECT_NAME:-jiawang-commerce}
+WAREHOUSE_WEB_CONTAINER=${WAREHOUSE_WEB_CONTAINER:-${PROJECT_NAME}-warehouse-web-1}
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+case "$RELEASE_ID" in *[!a-zA-Z0-9._-]*|'') echo "invalid RELEASE_ID" >&2; exit 2;; esac
 
-app_dir=/opt/jiawang-commerce-new
-candidate_dir=/tmp/jiawang-commerce-sync-20260818
-deploy_override=/tmp/compose.deploy-20260818.yaml
-
-cd "$candidate_dir"
+command -v docker >/dev/null 2>&1 || { echo DOCKER_UNAVAILABLE >&2; exit 3; }
+docker compose version >/dev/null 2>&1 || { echo DOCKER_COMPOSE_UNAVAILABLE >&2; exit 3; }
+for image in "$ORDER_IMAGE" "$WAREHOUSE_WEB_IMAGE" "$WAREHOUSE_WORKER_IMAGE"; do
+  case "$image" in sha256:????????????????????????????????????????????????????????????????|*@sha256:????????????????????????????????????????????????????????????????) ;; *) echo "images must use immutable sha256 references" >&2; exit 2;; esac
+  docker image inspect "$image" >/dev/null
+done
+test -f "$APP_DIR/.env" && test -f "$CANDIDATE_DIR/compose.yaml"
+cd "$CANDIDATE_DIR"
 node scripts/validate-compose-build.mjs
-
-current_master=$(docker inspect jiawang-commerce-warehouse-web-1 --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^APP_MASTER_KEY=//p')
-next_master=$(sed -n 's/^APP_MASTER_KEY=//p' "$app_dir/.env")
-test -n "$current_master"
-test -n "$next_master"
-if [ "$current_master" != "$next_master" ]; then
-  echo APP_MASTER_KEY_CHANGED_BLOCK
-  exit 42
-fi
-echo APP_MASTER_KEY_UNCHANGED
-
-docker tag jiawang-commerce-order:candidate-20260818-v2 jiawang-commerce-order:deploy-20260818
-docker tag jiawang-commerce-warehouse-web:candidate-20260818 jiawang-commerce-warehouse-web:deploy-20260818
-docker tag jiawang-commerce-warehouse-worker:candidate-20260818 jiawang-commerce-warehouse-worker:deploy-20260818
-sed -e 's/jiawang-commerce-order:deploy/jiawang-commerce-order:deploy-20260818/g' -e 's/jiawang-commerce-warehouse-web:deploy/jiawang-commerce-warehouse-web:deploy-20260818/g' -e 's/jiawang-commerce-warehouse-worker:deploy/jiawang-commerce-warehouse-worker:deploy-20260818/g' "$candidate_dir/compose.images.yaml" > "$deploy_override"
-
-docker compose --env-file "$app_dir/.env" -f "$candidate_dir/compose.yaml" -f "$deploy_override" config --quiet
-docker compose --env-file "$app_dir/.env" -f "$candidate_dir/compose.yaml" -f "$deploy_override" config | grep -E 'image: jiawang-commerce-(order|warehouse)|name: jiawang-commerce-new-(order-data|warehouse-data|warehouse-media)|order-media-worker:'
+node scripts/deployment-config-smoke.mjs
+node scripts/scan-secrets.mjs
+current_master=$(docker inspect "$WAREHOUSE_WEB_CONTAINER" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^APP_MASTER_KEY=//p')
+next_master=$(sed -n 's/^APP_MASTER_KEY=//p' "$APP_DIR/.env")
+test -n "$current_master" && test -n "$next_master"
+test "$current_master" = "$next_master" || { echo APP_MASTER_KEY_CHANGED_BLOCK >&2; exit 42; }
+cat > "$DEPLOY_OVERRIDE" <<EOF
+services:
+  order-web:
+    image: $ORDER_IMAGE
+    build: null
+  order-media-worker:
+    image: $ORDER_IMAGE
+    build: null
+  warehouse-volume-init:
+    image: $WAREHOUSE_WEB_IMAGE
+    build: null
+  warehouse-web:
+    image: $WAREHOUSE_WEB_IMAGE
+    build: null
+  warehouse-worker:
+    image: $WAREHOUSE_WORKER_IMAGE
+    build: null
+EOF
+docker compose --env-file "$APP_DIR/.env" -f "$CANDIDATE_DIR/compose.yaml" -f "$DEPLOY_OVERRIDE" config --quiet
+printf 'PREPARE_PASS RELEASE_ID=%s DEPLOY_OVERRIDE=%s\n' "$RELEASE_ID" "$DEPLOY_OVERRIDE"
