@@ -3,7 +3,7 @@
 ## 2026-08-28 首次规范接管与发布安全整改
 
 资源等级：重型
-当前状态：PR #1 修复后复审中
+当前状态：PR #1 修复 acceptance 发现的镜像启动阻断
 生产状态：保持不变，未获最终候选版发布批准
 
 ### 已完成
@@ -18,10 +18,10 @@
 - `baseline-v1` 指向绿色 CI 基线 `3ff147b`。
 - 老板确认 AI 接口保留但暂停扩展，人工录入是本轮关键流程。
 
-### 首轮独立审查
+### 独立审查与验收
 
-- reviewer：REVIEW FAIL。发现迁移后危险自动回滚、终检假阳性、订单 CI 覆盖不足、订单容器 root 运行和状态文档过期。
-- acceptance：BLOCKED。核心业务与 CI 项通过；等待 reviewer 问题修复和独立恢复演练证据。
+- reviewer：首轮 REVIEW FAIL；修复后最终复审 REVIEW PASS。
+- acceptance：独立恢复演练通过哈希、SQLite、媒体、全表计数和两次迁移，但订单镜像默认入口因运行期 Corepack 解析到 pnpm 11.24 而失败，最终结论 ACCEPTANCE FAIL。
 
 ### PR #1 整改
 
@@ -33,9 +33,12 @@
 - 新增中文 `README.md` 和英文 `README_EN.md`，说明架构、开发、隔离预览、测试、生产配置、发布安全和许可证。
 - 本地验证通过：发布/Compose 契约、秘密扫描、订单类型检查、Lint、生产构建、关键运行时测试、终检阈值测试、订单镜像构建、UID 1001 和全新临时卷写入。
 - GitHub Actions run `33140776035` 全部通过：订单验证、仓库验证和三套候选镜像构建均为 success。
+- 最新绿色 run `33141622415` 对应提交 `995b4fe`；它只验证镜像构建，尚未验证镜像默认入口。
+- 当前修复将订单 Web 和媒体 Worker 改为 Node 直接启动，避免普通用户触发 Corepack 下载；本地新镜像健康接口 200，Web/Worker 均以 `order` 用户运行且 `restart=0`。
+- CI 已增加订单镜像实际启动、健康检查、非 root 身份、Worker 存活和零重启 smoke test。
 
 ### 当前待办
 
-- README 预览参数和状态文档一致性已修正并推送；等待最终 CI 和 REVIEW PASS。
-- reviewer 通过后执行独立恢复演练，再由 acceptance 复审。
+- 提交并推送镜像入口修复，等待新 CI。
+- 新 CI 通过后，由独立 reviewer 和 acceptance 针对新提交复审。
 - 全部关键项通过后，才向老板申请具体候选版的生产发布批准。

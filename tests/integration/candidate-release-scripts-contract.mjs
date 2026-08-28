@@ -60,6 +60,12 @@ for (const content of [compose, previewCompose]) {
   assert.match(content, /order-media-worker:[\s\S]*security_opt:[\s\S]*no-new-privileges:true/);
 }
 assert.match(dockerfile, /USER order/);
+assert.ok(dockerfile.includes('CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]'));
+assert.ok(!dockerfile.includes('CMD ["pnpm"'));
+for (const content of [compose, previewCompose]) {
+  assert.ok(content.includes('command: ["node", "--import", "tsx", "scripts/media-worker.ts"]'));
+  assert.ok(!content.includes('command: ["pnpm", "run", "worker:media"]'));
+}
 for (const command of [
   "pnpm run test:business-flows",
   "pnpm run test:cross-system",

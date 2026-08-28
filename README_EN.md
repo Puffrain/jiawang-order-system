@@ -54,7 +54,7 @@ The default entry point is `http://127.0.0.1:3113`. Health endpoints are `/api/h
 
 ## Tests and CI
 
-GitHub Actions runs on Node.js 20 and covers secret scanning, type checks, linting, production builds, order business flows, cross-system synchronization, the warehouse test suite, Compose contracts, and three candidate image builds.
+GitHub Actions runs on Node.js 20 and covers secret scanning, type checks, linting, production builds, order business flows, cross-system synchronization, the warehouse test suite, Compose contracts, three candidate image builds, and a real order-image startup smoke test.
 
 ```bash
 pnpm run scan:secrets

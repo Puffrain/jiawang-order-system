@@ -70,7 +70,7 @@ services:
   order-media-worker:
     image: ${ORDER_CANDIDATE_IMAGE:?set ORDER_CANDIDATE_IMAGE}
     restart: unless-stopped
-    command: ["pnpm", "run", "worker:media"]
+    command: ["node", "--import", "tsx", "scripts/media-worker.ts"]
     environment:
       DATABASE_URL: file:/data/app.db
       UPLOAD_DIR: /data/uploads

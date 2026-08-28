@@ -54,7 +54,7 @@ WAREHOUSE_WORKER_CANDIDATE_IMAGE=repository/warehouse-worker@sha256:REPLACE_WITH
 
 ## 测试与 CI
 
-GitHub Actions 固定使用 Node.js 20，执行秘密扫描、类型检查、Lint、生产构建、订单业务回归、跨系统同步、仓库全量测试、Compose 契约和三套候选镜像构建。
+GitHub Actions 固定使用 Node.js 20，执行秘密扫描、类型检查、Lint、生产构建、订单业务回归、跨系统同步、仓库全量测试、Compose 契约、三套候选镜像构建和订单镜像实际启动检查。
 
 常用检查：
 

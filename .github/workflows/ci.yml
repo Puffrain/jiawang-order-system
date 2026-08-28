@@ -89,3 +89,45 @@ jobs:
           docker build --pull=false --target web --build-arg NEXT_PUBLIC_BASE_PATH=/warehouse --tag jiawang-commerce-warehouse-web:ci ./佳旺仓库系统
           docker build --pull=false --target worker --tag jiawang-commerce-warehouse-worker:ci ./佳旺仓库系统
           docker image inspect jiawang-commerce-order:ci jiawang-commerce-warehouse-web:ci jiawang-commerce-warehouse-worker:ci --format '{{.Id}}' | grep -E '^sha256:[0-9a-f]{64}$'
+      - name: Smoke-test order image runtime
+        env:
+          SESSION_SECRET: 0123456789abcdef0123456789abcdef
+          OWNER_PHONE: 19026405764
+          OWNER_PASSWORD: ci-only-password
+          INTEGRATION_SHARED_SECRET: abcdef0123456789abcdef0123456789
+        run: |
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs jiawang-order-ci-web 2>/dev/null || true
+              docker logs jiawang-order-ci-worker 2>/dev/null || true
+            fi
+            docker rm -f jiawang-order-ci-web jiawang-order-ci-worker 2>/dev/null || true
+            docker network rm jiawang-order-ci 2>/dev/null || true
+            docker volume rm jiawang-order-ci-data 2>/dev/null || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+          docker network create jiawang-order-ci
+          docker volume create jiawang-order-ci-data
+          docker run --rm --user 0:0 -v jiawang-order-ci-data:/data jiawang-commerce-order:ci sh -c 'mkdir -p /data/uploads && chown -R 1001:1001 /data'
+          docker run -d --name jiawang-order-ci-web --network jiawang-order-ci -p 127.0.0.1:3001:3000 \
+            -e DATABASE_URL=file:/data/app.db -e UPLOAD_DIR=/data/uploads -e NODE_ENV=production \
+            -e SESSION_COOKIE_SECURE=false -e SESSION_SECRET -e OWNER_PHONE -e OWNER_PASSWORD \
+            -e SMS_PREVIEW_MODE=true -e INTEGRATION_SHARED_SECRET -v jiawang-order-ci-data:/data \
+            jiawang-commerce-order:ci
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null; then break; fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:3001/api/health > /dev/null
+          test "$(docker inspect jiawang-order-ci-web --format '{{.Config.User}}')" = order
+          docker run -d --name jiawang-order-ci-worker --network jiawang-order-ci \
+            -e DATABASE_URL=file:/data/app.db -e UPLOAD_DIR=/data/uploads -e NODE_ENV=production \
+            -e INTEGRATION_SHARED_SECRET -e WAREHOUSE_INTERNAL_URL=http://warehouse.invalid \
+            -e MEDIA_WORKER_POLL_MS=30000 -v jiawang-order-ci-data:/data \
+            jiawang-commerce-order:ci node --import tsx scripts/media-worker.ts
+          sleep 5
+          test "$(docker inspect jiawang-order-ci-worker --format '{{.State.Status}}')" = running
+          test "$(docker inspect jiawang-order-ci-worker --format '{{.RestartCount}}')" = 0
+          test "$(docker inspect jiawang-order-ci-worker --format '{{.Config.User}}')" = order

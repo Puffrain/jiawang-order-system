@@ -45,7 +45,7 @@ services:
   order-media-worker:
     build: .
     restart: unless-stopped
-    command: ["pnpm", "run", "worker:media"]
+    command: ["node", "--import", "tsx", "scripts/media-worker.ts"]
     environment:
       DATABASE_URL: file:/data/app.db
       UPLOAD_DIR: /data/uploads
