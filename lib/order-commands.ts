@@ -1,7 +1,7 @@
 import db from '@/lib/db';
 import { createOrderRevision } from './order-revisions';
-import { buyerConfirm, cancelOrder, merchantConfirm } from './order-lifecycle';
-type Row = { id:string; status:string; buyerUserId:string; orderNo:string; orderVersion:number; merchantConfirmedVersion:number; buyerConfirmedVersion:number; confirmationStatus:any; fulfillmentStatus:any };
+import { buyerConfirm, cancelOrder, merchantConfirm, type ConfirmationStatus, type FulfillmentStatus } from './order-lifecycle';
+type Row = { id:string; status:string; buyerUserId:string; orderNo:string; orderVersion:number; merchantConfirmedVersion:number; buyerConfirmedVersion:number; confirmationStatus:ConfirmationStatus; fulfillmentStatus:FulfillmentStatus };
 export function getLifecycleOrder(orderId:string): Row {
   const row = db.prepare('SELECT id,status,buyer_user_id buyerUserId,order_no orderNo,order_version orderVersion,merchant_confirmed_version merchantConfirmedVersion,buyer_confirmed_version buyerConfirmedVersion,confirmation_status confirmationStatus,fulfillment_status fulfillmentStatus FROM orders WHERE id=? AND deleted_at IS NULL').get(orderId) as Row|undefined;
   if (!row) throw new Error('NOT_FOUND'); return row;
