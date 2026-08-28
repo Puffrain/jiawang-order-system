@@ -25,7 +25,7 @@
 
 ### PR #1 整改
 
-- 分支 `fix/release-safety-readme`，提交 `7d26412`，PR：`https://github.com/Puffrain/jiawang-order-system/pull/1`。
+- 分支 `fix/release-safety-readme`，最新提交 `dbb32f9`，PR：`https://github.com/Puffrain/jiawang-order-system/pull/1`。
 - 迁移后故障改为 `MANUAL_RECOVERY_REQUIRED`，禁止自动把旧镜像连接到可能已迁移的数据库。
 - 终检默认要求缺图、待处理/失败媒体、待处理/死信同步均为 0；关键错误日志会阻断成功结论。
 - 订单 Web/媒体 Worker 改为 UID 1001 非 root，新增一次性卷权限初始化并启用 `no-new-privileges`。
@@ -36,6 +36,6 @@
 
 ### 当前待办
 
-- 修正 reviewer 复审指出的 README 预览参数和状态文档一致性，推送 PR 后等待最终 REVIEW PASS。
+- README 预览参数和状态文档一致性已修正并推送；等待最终 CI 和 REVIEW PASS。
 - reviewer 通过后执行独立恢复演练，再由 acceptance 复审。
 - 全部关键项通过后，才向老板申请具体候选版的生产发布批准。
