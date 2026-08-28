@@ -8,4 +8,4 @@
 
 当前分支已将订单 Web 和媒体 Worker 的生产入口改为直接由 Node 启动，不再在运行期依赖 pnpm/Corepack。发布契约明确禁止旧入口，CI 增加镜像真实启动、健康接口、UID 1001、Worker 存活和零重启检查。本地新镜像已验证 Web 健康 200，Web/Worker 均为 `running restart=0`。
 
-PR #1 当前基线提交 `995b4fe` 的 GitHub Actions run `33141622415` 已全绿。下一步是提交运行入口修复、等待新 CI，然后由独立 reviewer 和 acceptance 针对新提交复审。生产服务器和商品数据不得操作，除非老板对最终候选版另行明确批准。
+PR #1 当前候选提交 `5f29eca` 的 GitHub Actions run `33151561438` 已全绿，包含订单、仓库、三套镜像构建和订单镜像真实启动 smoke。独立 reviewer 和 acceptance 正在整理最终结论。生产服务器和商品数据不得操作，除非老板对最终候选版另行明确批准。

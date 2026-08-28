@@ -25,7 +25,7 @@
 
 ### PR #1 整改
 
-- 分支 `fix/release-safety-readme`，最新提交 `dbb32f9`，PR：`https://github.com/Puffrain/jiawang-order-system/pull/1`。
+- 分支 `fix/release-safety-readme`，当前候选提交 `5f29eca`，PR：`https://github.com/Puffrain/jiawang-order-system/pull/1`。
 - 迁移后故障改为 `MANUAL_RECOVERY_REQUIRED`，禁止自动把旧镜像连接到可能已迁移的数据库。
 - 终检默认要求缺图、待处理/失败媒体、待处理/死信同步均为 0；关键错误日志会阻断成功结论。
 - 订单 Web/媒体 Worker 改为 UID 1001 非 root，新增一次性卷权限初始化并启用 `no-new-privileges`。
@@ -36,9 +36,9 @@
 - 最新绿色 run `33141622415` 对应提交 `995b4fe`；它只验证镜像构建，尚未验证镜像默认入口。
 - 当前修复将订单 Web 和媒体 Worker 改为 Node 直接启动，避免普通用户触发 Corepack 下载；本地新镜像健康接口 200，Web/Worker 均以 `order` 用户运行且 `restart=0`。
 - CI 已增加订单镜像实际启动、健康检查、非 root 身份、Worker 存活和零重启 smoke test。
+- GitHub Actions run `33151561438` 已通过订单、仓库、三套镜像构建和新增运行时 smoke test。
 
 ### 当前待办
 
-- 提交并推送镜像入口修复，等待新 CI。
-- 新 CI 通过后，由独立 reviewer 和 acceptance 针对新提交复审。
+- 独立 reviewer 和 acceptance 正在针对当前候选提交整理最终复审结论。
 - 全部关键项通过后，才向老板申请具体候选版的生产发布批准。

@@ -11,7 +11,7 @@
 4. `completed` 修复迁移后故障处理、终检阻断、订单非 root 和 CI 覆盖。
 5. `completed` 新增中英文 README，统一项目状态和发布文档。
 6. `completed` PR #1 基线 CI 与 reviewer 复审通过；独立恢复演练通过，但 acceptance 发现订单镜像默认入口失败。
-7. `in_progress` 修复运行期 pnpm/Corepack 问题，增加镜像实际启动 CI，并重新执行 reviewer 与 acceptance。
+7. `in_progress` 运行期 pnpm/Corepack 问题和镜像实际启动 CI 已通过，等待 reviewer 与 acceptance 最终结论。
 8. `pending` 全部关键项通过后，向老板申请最终候选版生产发布批准。
 
 ## 停止条件
