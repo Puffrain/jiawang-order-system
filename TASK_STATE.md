@@ -20,7 +20,7 @@
 - 随包 431 个文件全部存在；接管前 51 个文件指纹与随包清单不同，只标记为待审计变更。
 - `.task-backups/20260827-baseline-before/` 包含 466 个源码/配置文件及哈希清单，复核通过。
 - 已有本地 Git 导入提交和未验证标签；未验证标签不是发布标签。
-- GitHub 目标已确认为新私有仓库 `Puffrain/jiawang-order-system`。
+- GitHub 目标为 `Puffrain/jiawang-order-system`；2026-08-28 经老板批准改为公开仓库并采用 MIT License。
 
 ### 实施内容
 
@@ -45,7 +45,7 @@
 - 隔离预览运行于 `http://127.0.0.1:3113`，五个服务运行，使用三套独立命名卷。
 - 当前候选镜像摘要：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:ed4ccf92...1cfb`、仓库 Worker `sha256:e17012c5...0b1`。
 - 客户登录桌面浏览器检查无水平溢出，控制台零错误。
-- 远端只读盘点 `BLOCKED`：当前 Codex 任务未附加用户已连接的终端。独立 reviewer/acceptance `BLOCKED`：子代理工具持续返回参数解析错误。
+- 远端只读盘点后来已完成；当时未修改生产。独立 reviewer/acceptance 工具随后通过独立 Codex 任务恢复执行。
 - 老板确认当前主要采用人工录入；AI 配置和接口保留，但暂停进一步开发，不列为本轮关键验收项。
 
 ### 2026-08-28 阿里云只读盘点
@@ -66,12 +66,19 @@
 - 仓库 Node 20 Linux 全量测试 78/78；两套类型检查通过；Lint 均 0 error；静态部署、秘密和发布契约通过。
 - 当前镜像：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:caf46970...a33a`、仓库 Worker `sha256:708676d5...a556`。
 - 备份恢复、SQLite `quick_check=ok`、两次迁移和手机/桌面浏览器检查通过。
-- 独立 reviewer/acceptance 仍 BLOCKED：子代理平台持续返回参数解析 EOF。正式提交、`baseline-v1` 和 GitHub 私库推送已完成；生产发布仍未批准、未执行。
+- 正式提交、`baseline-v1` 和 GitHub 推送已完成；首轮独立 reviewer 为 FAIL、acceptance 为 BLOCKED，生产发布仍未批准、未执行。
 
 ### 2026-08-28 GitHub CI 收尾
 
 - 修复仓库上传路由被本机全局忽略规则漏收的问题，提交 `38f8cf4`。
 - 修复仓库测试命令在 Linux runner 下无法展开 glob 的问题，提交 `3ff147b`。
 - GitHub Actions run `33128325390` 全部通过：订单验证、仓库 78 项测试、三套镜像构建均通过。
-- GitHub 私有仓库已推送最新 `main`；`baseline-v1` 尚未移动，当前仍指向 `277f035`。
-- 分支保护 API 返回 403（当前账户计划限制）；生产部署仍未批准、未执行。
+- GitHub 公开仓库已推送 `main`；`baseline-v1` 指向绿色 CI 基线 `3ff147b`。
+- 分支保护已启用；生产部署仍未批准、未执行。
+
+### 2026-08-28 独立审查整改
+
+- 分支：`fix/release-safety-readme`。
+- 已实现：迁移后故障停止并要求人工恢复、终检阈值与关键日志阻断、订单非 root/卷初始化、订单关键 CI 覆盖、中英文 README。
+- 本地已通过发布/Compose 契约、秘密扫描、订单类型检查、Lint、生产构建、关键运行时测试、终检阈值运行测试、订单镜像构建和 UID/临时卷写入验证。
+- 待完成：提交 PR、GitHub Node 20 CI、独立 reviewer 复审、独立恢复演练和 acceptance 复审。

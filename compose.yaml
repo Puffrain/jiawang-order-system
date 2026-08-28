@@ -1,6 +1,14 @@
 name: jiawang-commerce
 
 services:
+  order-volume-init:
+    build: .
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/uploads && chown -R 1001:1001 /data"]
+    restart: "no"
+    volumes:
+      - order_data:/data
+
   order-web:
     build: .
     restart: unless-stopped
@@ -28,6 +36,11 @@ services:
     volumes:
       - order_data:/data
     expose: ["3000"]
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      order-volume-init:
+        condition: service_completed_successfully
 
   order-media-worker:
     build: .
@@ -43,11 +56,15 @@ services:
       MEDIA_WORKER_BATCH_SIZE: ${MEDIA_WORKER_BATCH_SIZE:-4}
     volumes:
       - order_data:/data
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       order-web:
         condition: service_started
       warehouse-web:
         condition: service_healthy
+      order-volume-init:
+        condition: service_completed_successfully
 
   warehouse-volume-init:
     build:

@@ -26,8 +26,8 @@
 | 浏览器桌面/手机 | PASS | 390px 页面无横向溢出，控制台 0 error |
 | 数据完整性 | PASS | 两套隔离 SQLite `quick_check=ok` |
 | 备份恢复演练 | PASS | 哈希、恢复、媒体核对、两次迁移已通过 |
-| 独立 reviewer | BLOCKED | 子代理平台接口持续返回参数解析 `EOF`；需人工或工具恢复后补审 |
-| 独立 acceptance | BLOCKED | 同上，未用主代理自检冒充独立验收 |
+| 独立 reviewer | FAIL | 发现迁移后自动回滚、终检假阳性、CI 覆盖、root 容器和文档一致性问题；修复分支等待复审 |
+| 独立 acceptance | BLOCKED | 核心业务与 CI 证据通过；等待 reviewer 问题修复和独立恢复演练证据 |
 
 ## 候选镜像
 
@@ -38,8 +38,8 @@
 ## 尚未放行
 
 - 已创建正式提交 `277f035`、后续 CI 修复提交 `3ff147b`；`baseline-v1` 已移动到经绿色 CI 验证的 `3ff147b`。
-- 已创建并推送 GitHub 私有仓库 `Puffrain/jiawang-order-system`；`main` 继续包含验收文档提交 `3d39494`。
+- 已创建并推送 GitHub 公开仓库 `Puffrain/jiawang-order-system`，采用 MIT License。
 - 文档提交触发的重复 CI run `33129098578` 长时间停在镜像构建阶段，已取消；不影响 `3ff147b` 对应的绿色 CI run `33128325390`。
-- GitHub 私有仓库分支保护尝试返回 403（账户计划不支持），尚未启用。
+- `main` 已启用必需 `verify`、一次审批、管理员强制、线性历史、禁止强推和禁止删除。
 - 未对生产服务器执行备份、权限修改、防火墙、SSH 加固、系统更新或部署。
 - 必须先完成独立 reviewer 和 acceptance；之后才能向老板申请对该候选版本的生产发布批准。

@@ -30,6 +30,9 @@ test -n "$current_master" && test -n "$next_master"
 test "$current_master" = "$next_master" || { echo APP_MASTER_KEY_CHANGED_BLOCK >&2; exit 42; }
 cat > "$DEPLOY_OVERRIDE" <<EOF
 services:
+  order-volume-init:
+    image: $ORDER_IMAGE
+    build: null
   order-web:
     image: $ORDER_IMAGE
     build: null

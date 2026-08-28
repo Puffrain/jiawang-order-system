@@ -40,7 +40,9 @@ jobs:
       - name: Verify order system
         env:
           SESSION_SECRET: 0123456789abcdef0123456789abcdef
+          OWNER_PHONE: 19026405764
           OWNER_PASSWORD: ci-only-password
+          SMS_PREVIEW_MODE: "true"
           INTEGRATION_SHARED_SECRET: abcdef0123456789abcdef0123456789
           APP_MASTER_KEY: 0123456789abcdef0123456789abcdef
           APP_ORIGIN: https://ci.invalid
@@ -57,6 +59,14 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null
           pnpm run test:regression
+          TEST_OWNER_PHONE=19026405764 TEST_OWNER_PASSWORD=ci-only-password pnpm run test:business-flows
+          pnpm run test:cross-system
+          pnpm run test:product-archive-sync
+          pnpm run test:loyalty
+          pnpm run test:warehouse-projection
+          pnpm run test:warehouse-media
+          pnpm run test:db-bootstrap
+          pnpm run test:production-data-check
       - name: Verify warehouse system
         working-directory: 佳旺仓库系统
         env:
