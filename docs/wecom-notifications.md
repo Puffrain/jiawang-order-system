@@ -6,10 +6,11 @@
 
 ```env
 WECOM_BOT_WEBHOOK_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=只填写企业微信机器人实际key
-WECOM_BOT_MENTION_MOBILE=可选的管理员手机号
+WECOM_BOT_MENTION_MOBILE=可选的管理员手机号，多个号码使用英文逗号分隔
 ```
 
 Webhook 只保存在服务器 `.env`，不要写入源码、截图或对话。修改后需要重新创建 `order-web` 容器，通知模块由订单主站发送。
+多个提醒手机号会自动去重；无效号码不会发送给企业微信。
 
 ## 通知内容
 
