@@ -66,7 +66,7 @@
 - 仓库 Node 20 Linux 全量测试 78/78；两套类型检查通过；Lint 均 0 error；静态部署、秘密和发布契约通过。
 - 当前镜像：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:caf46970...a33a`、仓库 Worker `sha256:708676d5...a556`。
 - 备份恢复、SQLite `quick_check=ok`、两次迁移和手机/桌面浏览器检查通过。
-- 独立 reviewer/acceptance 仍 BLOCKED：子代理平台持续返回参数解析 EOF。正式提交、`baseline-v1`、GitHub 推送和生产发布未执行。
+- 独立 reviewer/acceptance 仍 BLOCKED：子代理平台持续返回参数解析 EOF。正式提交、`baseline-v1` 和 GitHub 私库推送已完成；生产发布仍未批准、未执行。
 
 ### 2026-08-28 GitHub CI 收尾
 
