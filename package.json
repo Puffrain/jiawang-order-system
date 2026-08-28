@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "SESSION_SECRET=preview-session-secret-not-for-production-0001 SMS_PREVIEW_MODE=true OWNER_PHONE=19026405764 OWNER_PHONE_ALIASES=13806265100 OWNER_PASSWORD=PreviewOnlyPassword-ChangeMe-0001 next dev --webpack -H 0.0.0.0",
     "migrate": "node scripts/migrate-commerce-schema.cjs",
+    "migrate:order-lifecycle": "node scripts/migrate-order-lifecycle.cjs",
+    "test:migration-order-lifecycle": "node scripts/test-order-lifecycle-migration.cjs",
     "test:migration-commerce": "node scripts/test-commerce-migration.cjs",
     "test:customer-profile-legacy": "node scripts/test-customer-profile-legacy-db.cjs",
     "validate:compose-build": "node scripts/validate-compose-build.mjs",

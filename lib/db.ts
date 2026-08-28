@@ -253,6 +253,11 @@ ensureColumn("warehouse_media_sync", "next_attempt_at", "TEXT NOT NULL DEFAULT C
 ensureColumn("warehouse_media_sync", "claim_token", "TEXT");
 ensureColumn("warehouse_media_sync", "lease_expires_at", "TEXT");
 ensureColumn("warehouse_media_sync", "completed_at", "TEXT");
+// Order lifecycle v2 is additive and guarded for legacy databases.
+for (const [column, definition] of [["order_version", "INTEGER NOT NULL DEFAULT 1"], ["merchant_confirmed_version", "INTEGER NOT NULL DEFAULT 0"], ["buyer_confirmed_version", "INTEGER NOT NULL DEFAULT 0"], ["confirmation_status", "TEXT NOT NULL DEFAULT 'merchant_review'"], ["payment_status", "TEXT NOT NULL DEFAULT 'unpaid'"], ["payment_method", "TEXT"], ["fulfillment_status", "TEXT NOT NULL DEFAULT 'unfulfilled'"], ["fulfillment_method", "TEXT NOT NULL DEFAULT 'express'"], ["customer_hidden_at", "TEXT"], ["migration_source", "TEXT"]] as const) ensureColumn("orders", column, definition);
+db.exec("CREATE TABLE IF NOT EXISTS order_revisions (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, version INTEGER NOT NULL, snapshot_json TEXT NOT NULL, reason TEXT NOT NULL, actor_user_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(order_id,version))");
+db.exec("CREATE INDEX IF NOT EXISTS idx_order_revisions_order ON order_revisions(order_id,version)");
+db.prepare("UPDATE orders SET migration_source=COALESCE(migration_source,'legacy-order-schema') WHERE migration_source IS NULL").run();
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_warehouse_media_product ON warehouse_media_sync(product_id)");
 db.exec("CREATE INDEX IF NOT EXISTS idx_warehouse_media_due ON warehouse_media_sync(status,next_attempt_at,lease_expires_at)");
 db.exec("COMMIT");

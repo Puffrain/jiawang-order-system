@@ -1,0 +1,10 @@
+export type ConfirmationStatus = 'buyer_draft' | 'merchant_review' | 'buyer_review' | 'confirmed' | 'cancelled';
+export type FulfillmentStatus = 'unfulfilled' | 'assigned' | 'out_for_delivery' | 'shipped' | 'delivered' | 'failed';
+export type LifecycleOrder = { status: string; orderVersion: number; merchantConfirmedVersion: number; buyerConfirmedVersion: number; confirmationStatus: ConfirmationStatus; fulfillmentStatus: FulfillmentStatus };
+export function canCustomerEdit(order: LifecycleOrder): boolean { return order.confirmationStatus !== 'cancelled' && !['shipped', 'closed', 'cancelled'].includes(order.status) && order.fulfillmentStatus === 'unfulfilled'; }
+export function canCustomerCancel(order: LifecycleOrder): boolean { return canCustomerEdit(order); }
+export function nextVersion(order: LifecycleOrder): number { if (!Number.isSafeInteger(order.orderVersion) || order.orderVersion < 1) throw new Error('订单版本无效'); return order.orderVersion + 1; }
+export function confirmationAfterEdit() { return { confirmationStatus: 'merchant_review' as const, merchantConfirmedVersion: 0, buyerConfirmedVersion: 0 }; }
+export function merchantConfirm(order: LifecycleOrder, version: number) { if (version !== order.orderVersion) throw new Error('订单版本已更新，请刷新后确认'); if (!['merchant_review', 'buyer_review'].includes(order.confirmationStatus)) throw new Error('当前订单不能由商家确认'); return { confirmationStatus: 'buyer_review' as const, merchantConfirmedVersion: version }; }
+export function buyerConfirm(order: LifecycleOrder, version: number) { if (version !== order.orderVersion) throw new Error('订单版本已更新，请刷新后确认'); if (order.confirmationStatus !== 'buyer_review' || order.merchantConfirmedVersion !== version) throw new Error('请等待商家先确认当前订单'); return { confirmationStatus: 'confirmed' as const, buyerConfirmedVersion: version }; }
+export function cancelOrder(order: LifecycleOrder) { if (!canCustomerCancel(order)) throw new Error('发货后不能取消订单'); return { confirmationStatus: 'cancelled' as const, status: 'cancelled', fulfillmentStatus: 'failed' as const }; }
