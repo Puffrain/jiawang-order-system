@@ -1,6 +1,6 @@
 export const AUTH_MARKER_COOKIE = "hs_auth";
 
-type Role = "owner" | "buyer";
+type Role = "owner" | "buyer" | "courier";
 const encoder = new TextEncoder();
 
 async function key() {
@@ -21,7 +21,7 @@ export async function createAuthMarker(role: Role, expiresAtSeconds: number) {
 export async function verifyAuthMarker(value?: string): Promise<Role | null> {
   if (!value) return null;
   const [role, expires, signature] = value.split(".");
-  if ((role !== "owner" && role !== "buyer") || !expires || !signature || Number(expires) <= Math.floor(Date.now() / 1000)) return null;
+  if ((role !== "owner" && role !== "buyer" && role !== "courier") || !expires || !signature || Number(expires) <= Math.floor(Date.now() / 1000)) return null;
   try {
     const valid = await crypto.subtle.verify("HMAC", await key(), fromBase64Url(signature), encoder.encode(`${role}.${expires}`));
     return valid ? role : null;

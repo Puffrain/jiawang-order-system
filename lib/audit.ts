@@ -1,7 +1,7 @@
 import db from "@/lib/db";
 import { hashNetworkValue } from "@/lib/rate-limit";
 
-export type AuditRole = "owner" | "buyer" | "system";
+export type AuditRole = "owner" | "buyer" | "courier" | "system";
 
 export function writeAudit(input: { actorUserId?: string; actorRole?: AuditRole; action: string; objectType?: string; objectId?: string; metadata?: unknown; ip?: string }) {
   db.prepare(`INSERT INTO audit_logs (actor_user_id, actor_role, action, object_type, object_id, metadata_json, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
