@@ -67,3 +67,11 @@
 - 当前镜像：订单 `sha256:a9e1664c...b830`、仓库 Web `sha256:caf46970...a33a`、仓库 Worker `sha256:708676d5...a556`。
 - 备份恢复、SQLite `quick_check=ok`、两次迁移和手机/桌面浏览器检查通过。
 - 独立 reviewer/acceptance 仍 BLOCKED：子代理平台持续返回参数解析 EOF。正式提交、`baseline-v1`、GitHub 推送和生产发布未执行。
+
+### 2026-08-28 GitHub CI 收尾
+
+- 修复仓库上传路由被本机全局忽略规则漏收的问题，提交 `38f8cf4`。
+- 修复仓库测试命令在 Linux runner 下无法展开 glob 的问题，提交 `3ff147b`。
+- GitHub Actions run `33128325390` 全部通过：订单验证、仓库 78 项测试、三套镜像构建均通过。
+- GitHub 私有仓库已推送最新 `main`；`baseline-v1` 尚未移动，当前仍指向 `277f035`。
+- 分支保护 API 返回 403（当前账户计划限制）；生产部署仍未批准、未执行。
