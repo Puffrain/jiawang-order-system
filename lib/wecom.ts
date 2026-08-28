@@ -10,6 +10,15 @@ const webhookUrl = () => process.env.WECOM_BOT_WEBHOOK_URL?.trim() || "";
 const MAX_ATTEMPTS = 3;
 const REQUEST_TIMEOUT_MS = 5000;
 
+export function parseMentionMobiles(value = "") {
+  return [...new Set(
+    value
+      .split(/[,，\s]+/)
+      .map(item => item.trim())
+      .filter(item => item === "@all" || /^\d{11}$/.test(item)),
+  )];
+}
+
 function customerLabel(customer: CustomerInfo) {
   const name = customer.displayName?.trim() || "未填写姓名";
   const phone = customer.phone?.trim() || "未填写手机号";
@@ -28,7 +37,7 @@ function failureReason(error: unknown) {
 async function send(content: string) {
   const url = webhookUrl();
   if (!url) return;
-  const mentioned = process.env.WECOM_BOT_MENTION_MOBILE?.trim();
+  const mentionedMobiles = parseMentionMobiles(process.env.WECOM_BOT_MENTION_MOBILE);
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -36,7 +45,7 @@ async function send(content: string) {
       const response = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ msgtype: "text", text: { content, mentioned_mobile_list: mentioned ? [mentioned] : [] } }),
+        body: JSON.stringify({ msgtype: "text", text: { content, mentioned_mobile_list: mentionedMobiles } }),
         cache: "no-store",
         signal: controller.signal,
       });
