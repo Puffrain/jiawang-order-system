@@ -12,7 +12,7 @@ const requireFile = (file) => { if (!exists(file)) failures.push(`missing file: 
 const requireText = (file, text) => { requireFile(file); if (exists(file) && !read(file).includes(text)) failures.push(`${file} missing: ${text}`); };
 
 for (const file of ["Dockerfile", "佳旺仓库系统/Dockerfile", "compose.yaml", "compose.preview.yaml", "compose.images.yaml", "luffy.manifest.json", "proxy/integration.conf"]) requireFile(file);
-requireText("Dockerfile", "CMD [\"pnpm\", \"run\", \"start\"]");
+requireText("Dockerfile", "CMD [\"node\", \"node_modules/next/dist/bin/next\", \"start\", \"-H\", \"0.0.0.0\"]");
 requireText("Dockerfile", "ARG NEXT_PUBLIC_INFERENCE_PROXY_URL");
 requireText("佳旺仓库系统/Dockerfile", "FROM base AS deps");
 requireText("佳旺仓库系统/Dockerfile", "FROM deps AS builder");
@@ -23,7 +23,8 @@ requireText("佳旺仓库系统/Dockerfile", "CMD [\"node\", \"--import\", \"tsx
 requireText("compose.yaml", "context: ./佳旺仓库系统");
 requireText("compose.yaml", "target: web");
 requireText("compose.yaml", "target: worker");
-requireText("compose.yaml", "command: [\"pnpm\", \"run\", \"worker:media\"]");
+requireText("compose.yaml", "command: [\"node\", \"--import\", \"tsx\", \"scripts/media-worker.ts\"]");
+requireText("compose.preview.yaml", "command: [\"node\", \"--import\", \"tsx\", \"scripts/media-worker.ts\"]");
 requireText("compose.yaml", "luffy.entrypoint=true");
 requireText("compose.yaml", "luffy.port=80");
 requireText("compose.yaml", "NEXT_PUBLIC_BASE_PATH: /warehouse");

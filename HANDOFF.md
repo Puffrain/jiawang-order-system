@@ -1,11 +1,11 @@
 # Handoff
 
-## 2026-08-28 首次规范接管
+## 2026-08-28 发布安全修复
 
-当前目录仍是待审计候选版。接管前快照、Git 导入提交 `a453171` 和 `unverified-import-20260827` 标签已建立；该标签不能发布。
+公开仓库、MIT License 和 `main` 分支保护已经建立。已验证基线为 `baseline-v1` / `3ff147b`；当前工作在 `fix/release-safety-readme` 分支，尚未放行生产。
 
-隔离预览、备份恢复、人工商品上传到订单同步、Node 20 Linux 仓库 78/78 测试和手机浏览器检查已完成。新增一次性卷初始化容器解决仓库命名卷不可写，且不删除、清空或替换文件；保存成功后的多余离开确认框也已修复。
+独立 reviewer 最终复审为 REVIEW PASS。独立 acceptance 完成恢复演练后发现订单镜像默认入口失败：容器切换到 UID 1001 后，Corepack 找不到构建阶段 root 用户的 pnpm 10 激活记录，转而下载要求 Node 22 的 pnpm 11.24，导致 Node 20 容器持续重启。其余备份、哈希、SQLite、媒体和两次迁移项目均通过。
 
-验收报告见 `docs/ACCEPTANCE_REPORT_20260828.md`。候选镜像为订单 `a9e1664c...b830`、仓库 Web `caf46970...a33a`、仓库 Worker `708676d5...a556`。
+当前分支已将订单 Web 和媒体 Worker 的生产入口改为直接由 Node 启动，不再在运行期依赖 pnpm/Corepack。发布契约明确禁止旧入口，CI 增加镜像真实启动、健康接口、UID 1001、Worker 存活和零重启检查。本地新镜像已验证 Web 健康 200，Web/Worker 均为 `running restart=0`。
 
-生产只做过老板授权的只读盘点，未备份、下载或修改。独立 reviewer/acceptance 因子代理平台持续返回参数解析 EOF 而 BLOCKED；正式提交、`baseline-v1`、GitHub 推送和生产发布均暂停。
+PR #1 当前候选提交 `5f29eca` 的 GitHub Actions run `33151561438` 已全绿，包含订单、仓库、三套镜像构建和订单镜像真实启动 smoke。独立 reviewer 和 acceptance 正在整理最终结论。生产服务器和商品数据不得操作，除非老板对最终候选版另行明确批准。

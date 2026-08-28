@@ -14,22 +14,24 @@ test -n "$APPROVAL_REFERENCE" && test -f "$BACKUP_DIR/SHA256SUMS" && test -f "$D
 test -f "$CANDIDATE_DIR/proxy/integration.conf"
 (cd "$BACKUP_DIR" && sha256sum -c SHA256SUMS)
 
-rollback() {
-  cp "$BACKUP_DIR/compose.yaml" "$APP_DIR/compose.yaml"
-  cp "$BACKUP_DIR/compose.images.yaml" "$APP_DIR/compose.images.yaml"
-  cp "$BACKUP_DIR/integration.conf" "$APP_DIR/proxy/integration.conf"
-  (cd "$APP_DIR" && docker compose --env-file .env -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate)
-}
 install -m 644 "$CANDIDATE_DIR/compose.yaml" "$APP_DIR/compose.yaml"
 install -m 644 "$DEPLOY_OVERRIDE" "$APP_DIR/compose.images.yaml"
 install -m 644 "$CANDIDATE_DIR/proxy/integration.conf" "$APP_DIR/proxy/integration.conf"
 cd "$APP_DIR"
-if ! docker compose --env-file .env -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate; then rollback; echo CUTOVER_FAILED_ROLLED_BACK >&2; exit 1; fi
+if ! docker compose --env-file .env -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate; then
+  echo "CUTOVER_FAILED MANUAL_RECOVERY_REQUIRED BACKUP_DIR=$BACKUP_DIR" >&2
+  echo "Candidate startup may already have migrated SQLite. Do not start old images until schema compatibility or a verified database restore is approved." >&2
+  exit 1
+fi
 attempt=0
 while [ "$attempt" -lt 24 ]; do
   if curl -fsS "$HEALTH_BASE_URL/api/health" >/dev/null 2>&1 && curl -fsS "$HEALTH_BASE_URL/warehouse/api/health" >/dev/null 2>&1; then break; fi
   attempt=$((attempt + 1)); sleep 5
 done
-if [ "$attempt" -ge 24 ]; then rollback; echo HEALTH_FAILED_ROLLED_BACK >&2; exit 1; fi
+if [ "$attempt" -ge 24 ]; then
+  echo "HEALTH_FAILED MANUAL_RECOVERY_REQUIRED BACKUP_DIR=$BACKUP_DIR" >&2
+  echo "Keep candidate state for diagnosis. Restore databases and old images only from the verified backup under explicit recovery approval." >&2
+  exit 1
+fi
 docker compose --env-file .env -f compose.yaml -f compose.images.yaml ps
 printf 'CUTOVER_HEALTHY RELEASE_ID=%s APPROVAL_REFERENCE=%s\n' "$RELEASE_ID" "$APPROVAL_REFERENCE"

@@ -1,22 +1,21 @@
 # First Managed Baseline Plan
 
 资源等级：重型
-当前目标：完成首个可追溯、可验证、可回滚的正式基线。
-产品重点：人工录入商品；AI 仅保留接口，本轮暂停扩展。
+当前目标：修复独立审查发现的发布安全问题，完成可部署候选版和公开 GitHub 资料。
 
 ## 里程碑
 
-1. `completed` 固定接管前源码快照，建立 Git 未验证导入节点。
-2. `completed` 修复生产必填配置、仓库 base path、Docker 检测、秘密扫描与发布/回滚脚本。
-3. `completed` 建立 Node 20 CI 与发布手册，完成静态、构建和运行时验证。
-4. `completed` 用隔离卷完成人工商品录入、图片、规格、库存、审核、发布和订单同步。
-5. `completed` 完成备份、哈希、SQLite 完整性、两次幂等迁移和恢复演练。
-6. `blocked` 独立 reviewer 和 acceptance：子代理平台参数解析 EOF。
-7. `pending` 独立检查通过后审计 diff、创建正式提交和 `baseline-v1`，再创建 GitHub 私库并设置保护。
-8. `pending` 向老板展示报告；只有老板明确批准具体候选版后，才安排生产备份和发布。
+1. `completed` 接管快照、Git 导入、隔离预览、人工商品全链路和备份恢复演练。
+2. `completed` GitHub 公开仓库、MIT License、绿色 CI 基线和 `main` 分支保护。
+3. `completed` 首轮独立 reviewer 与 acceptance；修复后 reviewer PASS，acceptance 的恢复项目通过但镜像入口验收 FAIL。
+4. `completed` 修复迁移后故障处理、终检阻断、订单非 root 和 CI 覆盖。
+5. `completed` 新增中英文 README，统一项目状态和发布文档。
+6. `completed` PR #1 基线 CI 与 reviewer 复审通过；独立恢复演练通过，但 acceptance 发现订单镜像默认入口失败。
+7. `in_progress` 运行期 pnpm/Corepack 问题和镜像实际启动 CI 已通过，等待 reviewer 与 acceptance 最终结论。
+8. `pending` 全部关键项通过后，向老板申请最终候选版生产发布批准。
 
 ## 停止条件
 
 - 真实凭据、客户数据或生产文件准备进入 Git 时立即停止。
 - 镜像、Compose、备份、数据完整性、健康或核心业务失败时不得发布。
-- 未获得老板批准时不得修改生产。
+- 未获得老板对具体候选版的批准时不得修改生产。

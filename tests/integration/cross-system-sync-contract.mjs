@@ -26,7 +26,7 @@ assert.doesNotMatch(media, /ON CONFLICT\(warehouse_asset_id\)/);
 assert.match(media, /ON CONFLICT DO UPDATE SET/);
 assert.match(mediaWorker, /retryPendingWarehouseMedia\(batchSize(?:, options)?\)/);
 assert.match(compose, /order-media-worker:/);
-assert.match(compose, /worker:media/);
+assert.ok(compose.includes('command: ["node", "--import", "tsx", "scripts/media-worker.ts"]'));
 assert.match(outbox, /saleStatus/);
 assert.match(outbox, /FROM order_sync_outbox WHERE product_id=\? AND revision=\?/);
 assert.match(outbox, /existing.payloadHash === event.payloadHash/);

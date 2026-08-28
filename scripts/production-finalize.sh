@@ -15,6 +15,13 @@ WAREHOUSE_WEB_CONTAINER=${WAREHOUSE_WEB_CONTAINER:-${PROJECT_NAME}-warehouse-web
 WAREHOUSE_WORKER_CONTAINER=${WAREHOUSE_WORKER_CONTAINER:-${PROJECT_NAME}-warehouse-worker-1}
 HEALTH_BASE_URL=${HEALTH_BASE_URL:-http://127.0.0.1:8080}
 LOG_SINCE=${LOG_SINCE:-10m}
+LOG_ERROR_PATTERN=${LOG_ERROR_PATTERN:-error|fatal|exception|failed|uncaught|unhandled|panic}
+LOG_MATCHES_APPROVED=${LOG_MATCHES_APPROVED:-false}
+MAX_PENDING_MEDIA=${MAX_PENDING_MEDIA:-0}
+MAX_FAILED_MEDIA=${MAX_FAILED_MEDIA:-0}
+MAX_MISSING_IMAGES=${MAX_MISSING_IMAGES:-0}
+MAX_SYNC_PENDING=${MAX_SYNC_PENDING:-0}
+MAX_SYNC_DEAD=${MAX_SYNC_DEAD:-0}
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 command -v docker >/dev/null 2>&1 || { echo DOCKER_UNAVAILABLE >&2; exit 3; }
@@ -36,13 +43,21 @@ cleanup() {
 trap cleanup EXIT INT TERM
 docker cp "$SCRIPT_DIR/production-data-check.cjs" "$ORDER_CONTAINER:/app/production-data-check.cjs"
 docker cp "$SCRIPT_DIR/production-data-check.cjs" "$WAREHOUSE_WORKER_CONTAINER:/app/production-data-check.cjs"
-docker exec -e UPLOAD_DIR=/data/uploads "$ORDER_CONTAINER" node /app/production-data-check.cjs order /data/app.db
-docker exec "$WAREHOUSE_WORKER_CONTAINER" node /app/production-data-check.cjs warehouse /data/db/app.sqlite
+docker exec -e UPLOAD_DIR=/data/uploads -e MAX_PENDING_MEDIA="$MAX_PENDING_MEDIA" -e MAX_FAILED_MEDIA="$MAX_FAILED_MEDIA" -e MAX_MISSING_IMAGES="$MAX_MISSING_IMAGES" "$ORDER_CONTAINER" node /app/production-data-check.cjs order /data/app.db
+docker exec -e MAX_SYNC_PENDING="$MAX_SYNC_PENDING" -e MAX_SYNC_DEAD="$MAX_SYNC_DEAD" "$WAREHOUSE_WORKER_CONTAINER" node /app/production-data-check.cjs warehouse /data/db/app.sqlite
 cleanup
 trap - EXIT INT TERM
 
+log_matches=0
 for container in "$ORDER_CONTAINER" "$ORDER_WORKER_CONTAINER" "$WAREHOUSE_WEB_CONTAINER" "$WAREHOUSE_WORKER_CONTAINER"; do
   echo "LOG_CHECK=$container"
-  docker logs --since "$LOG_SINCE" "$container" 2>&1 | grep -Ei 'error|fatal|exception|failed' || true
+  log_file=$(mktemp)
+  docker logs --since "$LOG_SINCE" "$container" >"$log_file" 2>&1
+  if grep -Ei "$LOG_ERROR_PATTERN" "$log_file"; then log_matches=1; fi
+  rm -f "$log_file"
 done
+if [ "$log_matches" -ne 0 ] && [ "$LOG_MATCHES_APPROVED" != true ]; then
+  echo "FINALIZE_FAILED critical log matches require investigation or LOG_MATCHES_APPROVED=true with recorded approval" >&2
+  exit 1
+fi
 printf 'FINALIZE_PASS RELEASE_ID=%s APPROVAL_REFERENCE=%s\n' "$RELEASE_ID" "$APPROVAL_REFERENCE"

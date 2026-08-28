@@ -9,6 +9,11 @@ const prepare = fs.readFileSync("scripts/production-deploy-prepare.sh", "utf8");
 const backup = fs.readFileSync("scripts/production-deploy-backup.sh", "utf8");
 const cutover = fs.readFileSync("scripts/production-deploy-cutover.sh", "utf8");
 const finalize = fs.readFileSync("scripts/production-finalize.sh", "utf8");
+const dataCheck = fs.readFileSync("scripts/production-data-check.cjs", "utf8");
+const compose = fs.readFileSync("compose.yaml", "utf8");
+const previewCompose = fs.readFileSync("compose.preview.yaml", "utf8");
+const dockerfile = fs.readFileSync("Dockerfile", "utf8");
+const workflow = fs.readFileSync(".github/workflows/ci.yml", "utf8");
 const imageTemplate = fs.readFileSync("compose.images.yaml", "utf8");
 assert.match(build, /--target web/);
 assert.match(build, /--target worker/);
@@ -32,13 +37,44 @@ assert.match(backup, /order-uploads\.before\.tar\.gz/);
 assert.match(backup, /sha256sum -c SHA256SUMS/);
 assert.match(cutover, /PRODUCTION_DEPLOY_APPROVED/);
 assert.match(cutover, /sha256sum -c SHA256SUMS/);
-assert.match(cutover, /rollback/);
+assert.doesNotMatch(cutover, /rollback()/);
+assert.match(cutover, /MANUAL_RECOVERY_REQUIRED/);
+assert.match(cutover, /BACKUP_DIR/);
 assert.match(cutover, /CANDIDATE_DIR\/proxy\/integration\.conf/);
-assert.match(cutover, /BACKUP_DIR\/integration\.conf/);
+assert.doesNotMatch(cutover, /cp .*BACKUP_DIR.*integration\.conf/);
 assert.match(finalize, /production-data-check/);
 assert.match(finalize, /SCRIPT_DIR/);
 assert.match(finalize, /FINALIZE_PASS/);
+assert.match(finalize, /FINALIZE_FAILED/);
+assert.doesNotMatch(finalize, /grep[^\n]+\|\| true/);
+for (const name of ["MAX_PENDING_MEDIA", "MAX_FAILED_MEDIA", "MAX_MISSING_IMAGES", "MAX_SYNC_PENDING", "MAX_SYNC_DEAD"]) {
+  assert.ok(finalize.includes(`-e ${name}=`), `finalize must pass ${name} into its data checker container`);
+}
+assert.match(dataCheck, /MAX_PENDING_MEDIA/);
+assert.match(dataCheck, /MAX_SYNC_DEAD/);
+assert.match(dataCheck, /imageFilesMissing/);
 assert.doesNotMatch(finalize, /cp -a|install .*production\.env|docker rm|docker network rm/);
+for (const content of [compose, previewCompose]) {
+  assert.match(content, /order-volume-init:/);
+  assert.match(content, /order-web:[\s\S]*security_opt:[\s\S]*no-new-privileges:true/);
+  assert.match(content, /order-media-worker:[\s\S]*security_opt:[\s\S]*no-new-privileges:true/);
+}
+assert.match(dockerfile, /USER order/);
+assert.ok(dockerfile.includes('CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]'));
+assert.ok(!dockerfile.includes('CMD ["pnpm"'));
+for (const content of [compose, previewCompose]) {
+  assert.ok(content.includes('command: ["node", "--import", "tsx", "scripts/media-worker.ts"]'));
+  assert.ok(!content.includes('command: ["pnpm", "run", "worker:media"]'));
+}
+for (const command of [
+  "pnpm run test:business-flows",
+  "pnpm run test:cross-system",
+  "pnpm run test:product-archive-sync",
+  "pnpm run test:loyalty",
+  "pnpm run test:warehouse-projection",
+  "pnpm run test:warehouse-media",
+  "pnpm run test:db-bootstrap",
+]) assert.ok(workflow.includes(command), `CI must run ${command}`);
 assert.ok(imageTemplate.includes("${ORDER_IMAGE:?set ORDER_IMAGE"));
 assert.ok(imageTemplate.includes("${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE"));
 assert.ok(imageTemplate.includes("${WAREHOUSE_WORKER_IMAGE:?set WAREHOUSE_WORKER_IMAGE"));

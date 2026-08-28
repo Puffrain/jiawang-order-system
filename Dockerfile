@@ -44,11 +44,13 @@ RUN DATABASE_URL=file:/tmp/jiawang-build.db pnpm run build
 # /data 是 SQLite 持久化挂载点 (compose.yaml 命名 volume 挂这里);
 # 容器启动时如果 volume 已挂载, 实际目录被 volume 内容覆盖, 这里 mkdir
 # 仅作镜像层保底.
-RUN mkdir -p /data
+RUN addgroup -g 1001 order && adduser -D -u 1001 -G order order && \
+    mkdir -p /data && chown order:order /data
 
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
 
-CMD ["pnpm", "run", "start"]
+USER order
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]
