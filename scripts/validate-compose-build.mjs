@@ -27,6 +27,7 @@ requireText("compose.yaml", "command: [\"node\", \"--import\", \"tsx\", \"script
 requireText("compose.preview.yaml", "command: [\"node\", \"--import\", \"tsx\", \"scripts/media-worker.ts\"]");
 requireText("compose.yaml", "luffy.entrypoint=true");
 requireText("compose.yaml", "luffy.port=80");
+requireText("compose.yaml", "127.0.0.1:${HTTP_PORT:-8080}:80");
 requireText("compose.yaml", "NEXT_PUBLIC_BASE_PATH: /warehouse");
 requireText("compose.yaml", "/warehouse/api/health");
 requireText("compose.preview.yaml", "ORDER_CANDIDATE_IMAGE");
@@ -37,7 +38,8 @@ requireText("compose.images.yaml", "order-media-worker");
 const compose = exists("compose.yaml") ? read("compose.yaml") : "";
 const warehouseCompose = exists("佳旺仓库系统/compose.yaml") ? read("佳旺仓库系统/compose.yaml") : "";
 if ((compose.match(/services:/g) || []).length !== 1) failures.push("compose.yaml must contain one services section");
-if (compose.includes("ports:")) warnings.push("compose.yaml contains ports; verify only gateway exposes host access");
+const portSections = compose.match(/^    ports:/gm) || [];
+if (portSections.length !== 1) failures.push("compose.yaml must expose exactly one host port section for gateway");
 for (const [file, content] of [["compose.yaml", compose], ["佳旺仓库系统/compose.yaml", warehouseCompose]]) {
   if (!content.includes("APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN to the public HTTPS origin}")) failures.push(`${file} must require APP_ORIGIN`);
   if (!content.includes("APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}")) failures.push(`${file} must require APP_MASTER_KEY`);
