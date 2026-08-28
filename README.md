@@ -40,8 +40,15 @@ pnpm run build
 隔离预览使用全新的命名卷，不连接生产数据。先根据 `preview.env.example` 创建本地预览环境文件，再运行：
 
 ```bash
-PREVIEW_ID=my-preview PREVIEW_ENV_FILE=/absolute/path/preview.env ./scripts/start-isolated-preview.sh
+PREVIEW_ID=my-preview \
+PREVIEW_ENV_FILE=/absolute/path/preview.env \
+ORDER_CANDIDATE_IMAGE=repository/order@sha256:REPLACE_WITH_64_HEX_DIGEST \
+WAREHOUSE_WEB_CANDIDATE_IMAGE=repository/warehouse-web@sha256:REPLACE_WITH_64_HEX_DIGEST \
+WAREHOUSE_WORKER_CANDIDATE_IMAGE=repository/warehouse-worker@sha256:REPLACE_WITH_64_HEX_DIGEST \
+./scripts/start-isolated-preview.sh
 ```
+
+三个镜像变量必须使用本次候选版的不可变 SHA-256 摘要，不能使用 `latest`。镜像清单由 `scripts/build-node20-candidates.sh` 生成。
 
 默认入口为 `http://127.0.0.1:3113`。订单健康接口是 `/api/health`，仓库健康接口是 `/warehouse/api/health`。
 

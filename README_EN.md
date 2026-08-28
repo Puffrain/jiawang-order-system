@@ -40,8 +40,15 @@ Run the order development server with `pnpm dev`. Run `pnpm dev` inside `佳旺�
 The preview environment uses fresh named volumes and never connects to production data. Create a local environment file based on `preview.env.example`, then run:
 
 ```bash
-PREVIEW_ID=my-preview PREVIEW_ENV_FILE=/absolute/path/preview.env ./scripts/start-isolated-preview.sh
+PREVIEW_ID=my-preview \
+PREVIEW_ENV_FILE=/absolute/path/preview.env \
+ORDER_CANDIDATE_IMAGE=repository/order@sha256:REPLACE_WITH_64_HEX_DIGEST \
+WAREHOUSE_WEB_CANDIDATE_IMAGE=repository/warehouse-web@sha256:REPLACE_WITH_64_HEX_DIGEST \
+WAREHOUSE_WORKER_CANDIDATE_IMAGE=repository/warehouse-worker@sha256:REPLACE_WITH_64_HEX_DIGEST \
+./scripts/start-isolated-preview.sh
 ```
+
+All three image variables must use immutable SHA-256 digests for the reviewed candidate. Do not use `latest`. `scripts/build-node20-candidates.sh` produces the image manifest.
 
 The default entry point is `http://127.0.0.1:3113`. Health endpoints are `/api/health` and `/warehouse/api/health`.
 
