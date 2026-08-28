@@ -12,6 +12,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(_: Request, { params }: RouteContext) {
   const auth = await requireApiRole();
   if (auth.response) return auth.response;
+  if (auth.session.role === 'courier') return NextResponse.json({ error: '无权查看商品' }, { status: 403 });
   const { id } = await params;
   const product = getProductDetail(id, auth.session.role);
   return product

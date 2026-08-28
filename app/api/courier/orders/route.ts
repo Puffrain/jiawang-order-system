@@ -1,0 +1,5 @@
+import { NextResponse } from 'next/server';
+import { requireApiRole } from '@/lib/auth';
+import db from '@/lib/db';
+type CourierOrder = Record<string, unknown> & { recipientSnapshot: string };
+export async function GET(){const auth=await requireApiRole('courier');if(auth.response)return auth.response;const rows=db.prepare("SELECT o.id,o.order_no orderNo,o.status,o.fulfillment_status fulfillmentStatus,o.fulfillment_method fulfillmentMethod,o.shipping_carrier shippingCarrier,o.tracking_number trackingNumber,o.delivery_started_at deliveryStartedAt,o.delivered_at deliveredAt,o.delivery_failure_reason deliveryFailureReason,o.recipient_snapshot recipientSnapshot,o.customer_remark customerRemark,o.updated_at updatedAt FROM orders o WHERE o.courier_user_id=? AND o.deleted_at IS NULL ORDER BY CASE o.fulfillment_status WHEN 'out_for_delivery' THEN 0 WHEN 'assigned' THEN 1 ELSE 2 END,o.updated_at DESC").all(auth.session!.userId) as CourierOrder[];return NextResponse.json({orders:rows.map(row=>({...row,recipientSnapshot:JSON.parse(row.recipientSnapshot)}))},{headers:{'Cache-Control':'no-store'}});}

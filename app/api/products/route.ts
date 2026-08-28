@@ -7,6 +7,7 @@ import { refreshWarehouseStock } from "@/lib/warehouse-inventory";
 
 export async function GET() {
   const auth=await requireApiRole(); if(auth.response)return auth.response;
+  if (auth.session.role === 'courier') return NextResponse.json({ error: '无权查看商品' }, { status: 403 });
   try { await refreshWarehouseStock(); } catch { /* serve the last warehouse snapshot during a brief outage */ }
   return NextResponse.json({products:listProducts(auth.session.role)},{headers:{"Cache-Control":"no-store"}});
 }
