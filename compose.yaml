@@ -136,6 +136,8 @@ services:
   gateway:
     image: docker.m.daocloud.io/library/nginx:1.27-alpine
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:80"
     volumes:
       - ./proxy/integration.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

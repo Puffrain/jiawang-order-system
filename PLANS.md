@@ -12,7 +12,9 @@
 5. `completed` 新增中英文 README，统一项目状态和发布文档。
 6. `completed` PR #1 基线 CI 与 reviewer 复审通过；独立恢复演练通过，但 acceptance 发现订单镜像默认入口失败。
 7. `in_progress` 运行期 pnpm/Corepack 问题和镜像实际启动 CI 已通过，等待 reviewer 与 acceptance 最终结论。
-8. `pending` 全部关键项通过后，向老板申请最终候选版生产发布批准。
+8. `completed` 老板批准 `baseline-v2`，完成备份、可信构建、数据原卷迁移、健康和数据终检。
+9. `in_progress` 补做远程部署独立 reviewer/acceptance，并将网关 8080 端口纳入正式发布契约。
+10. `pending` 独立复核通过后清理旧镜像，保留已校验备份和当前不可变镜像。
 
 ## 停止条件
 

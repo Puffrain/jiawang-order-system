@@ -17,6 +17,7 @@ const warehouse = fs.readFileSync("佳旺仓库系统/compose.yaml", "utf8");
 assert.ok(warehouse.includes("/warehouse/api/health"), "warehouse health checks must include the configured base path");
 const root = fs.readFileSync("compose.yaml", "utf8");
 assert.ok(root.includes('SESSION_COOKIE_SECURE: "true"'), "production compose must enforce secure session cookies");
+assert.ok(root.includes('127.0.0.1:${HTTP_PORT:-8080}:80'), "production gateway must publish the host-loopback port used by the outer reverse proxy");
 for (const variable of ["SESSION_SECRET", "OWNER_PASSWORD", "INTEGRATION_SHARED_SECRET"]) {
   assert.ok(root.includes("${" + variable + ":?set " + variable + "}"), `compose.yaml must require ${variable}`);
 }
