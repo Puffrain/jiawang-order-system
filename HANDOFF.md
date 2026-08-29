@@ -1,5 +1,13 @@
 # Handoff
 
+## 2026-08-29 商品分页、消息滚动与买家橙色主题
+
+老板已确认并要求本地实施：商品管理每页 8 件，提供上一页、下一页、当前页和总页数，筛选变化回到第一页；客户消息采用固定高度，会话列表和消息记录分别上下滚动，输入栏保持可见；买家“我的”个人资料卡和“我的积分”余额卡由黑色改为品牌橙色。
+
+相关实现位于 `components/admin/product-manager.tsx`、`components/admin/conversation-list.tsx`、`components/chat/chat-panel.tsx`、`app/buyer/page.tsx`、`app/buyer/points/page.tsx`。本地 `typecheck`、Lint、生产构建和买家响应式布局契约均通过；Lint 仍有 3 个任务前既有 warning，构建仍有 1 个既有 Turbopack NFT tracing warning。
+
+本次界面修改尚未提交或推送 GitHub，也尚未部署生产。当前分支为 `codex/buyer-desktop-layout`；提交时不要纳入本地 `TASK_STATE.md` 的其他历史改动和 `output/` 验收产物，需先复核本次差异范围。老板新增长期要求：每次任务结束必须更新概要及其新要求，确保后续智能体可按最小接管包直接继续。
+
 ## 2026-08-29 订单生命周期与配送员发布
 
 老板已批准发布 `order-lifecycle-courier-20260829-r2`，候选源码为公开仓库 `main` 的 `51f4b1519cd4f14158f30ac9775385af257e9259`。发布前候选包 SHA-256 为 `57660c1bb8da42c12419ebebc8a4611844e097bd54eb863e4da460cd8186efcc`，已在服务器完成核验后再解包。
