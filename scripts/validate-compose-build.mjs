@@ -18,6 +18,7 @@ requireText("佳旺仓库系统/Dockerfile", "FROM base AS deps");
 requireText("佳旺仓库系统/Dockerfile", "FROM deps AS builder");
 requireText("佳旺仓库系统/Dockerfile", "FROM node:20-bookworm-slim AS web");
 requireText("佳旺仓库系统/Dockerfile", "FROM deps AS worker");
+requireText("佳旺仓库系统/Dockerfile", "sed -i 's#deb.debian.org#mirrors.aliyun.com#g' /etc/apt/sources.list.d/debian.sources");
 requireText("佳旺仓库系统/Dockerfile", "CMD [\"node\", \"server.js\"]");
 requireText("佳旺仓库系统/Dockerfile", "CMD [\"node\", \"--import\", \"tsx\", \"worker/index.ts\"]");
 requireText("compose.yaml", "context: ./佳旺仓库系统");
