@@ -1,0 +1,3 @@
+'use client';
+import { useState } from 'react';
+export default function ReceiveButton({orderId}:{orderId:string}){const[error,setError]=useState('');const confirm=async()=>{if(!window.confirm('确认已经收到商品吗？'))return;const response=await fetch('/api/orders/'+orderId+'/receive',{method:'POST'}),body=await response.json().catch(()=>({}));if(!response.ok)return setError(body.error||'确认失败');window.location.reload()};return <div><button onClick={()=>void confirm()} className="mt-3 min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white">确认收货</button>{error&&<p className="mt-2 text-sm text-red-600">{error}</p>}</div>}
