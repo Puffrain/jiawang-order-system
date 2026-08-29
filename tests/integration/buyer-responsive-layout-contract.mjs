@@ -19,9 +19,10 @@ assert.ok(catalog.includes("grid-cols-[92px_1fr]"), "mobile catalog must retain 
 assert.ok(catalog.includes("lg:grid-cols-[184px_minmax(0,1fr)]"), "desktop catalog must widen the category rail");
 assert.ok(catalog.includes("lg:grid-cols-2") && catalog.includes("xl:grid-cols-3"), "desktop product list must use two and three column grids");
 assert.ok(catalog.includes("data-buyer-product-card"), "product cards must expose a stable acceptance selector");
-assert.ok(catalog.includes("overflow-x-auto"), "category navigation must remain scrollable when desktop categories overflow");
-assert.ok(!catalog.includes("lg:overflow-visible"), "desktop category navigation must not disable overflow scrolling");
-assert.ok(!catalog.includes("justify-center"), "overflowing category navigation must remain start-aligned");
+const categoryStrip = catalog.match(/<div data-buyer-primary-categories className="([^"]+)"/u)?.[1] || "";
+assert.ok(categoryStrip.includes("overflow-x-auto"), "category navigation must remain scrollable when desktop categories overflow");
+assert.ok(!categoryStrip.includes("lg:overflow-visible"), "desktop category navigation must not disable overflow scrolling");
+assert.ok(!categoryStrip.includes("justify-center"), "overflowing category navigation must remain start-aligned");
 
 assert.ok(detail.includes("max-w-[520px]"), "mobile product detail width must remain unchanged");
 assert.ok(detail.includes("lg:max-w-[1280px]"), "desktop product detail must expand at the large breakpoint");

@@ -46,7 +46,7 @@ export default function CatalogHome({ products, notices, onAdded }: { products: 
         <Search size={21} className="text-slate-400" />
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索商品、品牌或 SKU" className="min-w-0 flex-1 bg-transparent text-base outline-none" />
       </label>
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] justify-start lg:gap-6">
+      <div data-buyer-primary-categories className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] justify-start lg:gap-6">
         {primaryItems.map((item) => <button key={item.key} onClick={() => { setPrimary(item.key); setSecondary("all"); }} className="w-[66px] shrink-0 text-center lg:w-[82px]">
           <span className={"mx-auto grid h-14 w-14 overflow-hidden rounded-xl border-2 bg-orange-50 lg:h-16 lg:w-16 " + (primary === item.key ? "border-orange-500" : "border-transparent")}>
             {item.image ? <Image src={item.image} alt="" width={64} height={64} unoptimized className="h-full w-full object-cover" /> : <Store className="m-auto text-orange-300" />}
