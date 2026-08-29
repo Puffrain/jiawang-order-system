@@ -21,6 +21,7 @@ assert.ok(catalog.includes("lg:grid-cols-2") && catalog.includes("xl:grid-cols-3
 assert.ok(catalog.includes("data-buyer-product-card"), "product cards must expose a stable acceptance selector");
 assert.ok(catalog.includes("overflow-x-auto"), "category navigation must remain scrollable when desktop categories overflow");
 assert.ok(!catalog.includes("lg:overflow-visible"), "desktop category navigation must not disable overflow scrolling");
+assert.ok(!catalog.includes("justify-center"), "overflowing category navigation must remain start-aligned");
 
 assert.ok(detail.includes("max-w-[520px]"), "mobile product detail width must remain unchanged");
 assert.ok(detail.includes("lg:max-w-[1280px]"), "desktop product detail must expand at the large breakpoint");
