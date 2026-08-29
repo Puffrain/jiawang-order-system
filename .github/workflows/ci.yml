@@ -67,6 +67,7 @@ jobs:
           pnpm run test:warehouse-media
           pnpm run test:db-bootstrap
           pnpm run test:production-data-check
+          pnpm run test:courier-payment
       - name: Verify warehouse system
         working-directory: 佳旺仓库系统
         env:
