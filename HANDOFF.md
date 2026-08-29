@@ -6,7 +6,13 @@
 
 相关实现位于 `components/admin/product-manager.tsx`、`components/admin/conversation-list.tsx`、`components/chat/chat-panel.tsx`、`app/buyer/page.tsx`、`app/buyer/points/page.tsx`。本地 `typecheck`、Lint、生产构建和买家响应式布局契约均通过；Lint 仍有 3 个任务前既有 warning，构建仍有 1 个既有 Turbopack NFT tracing warning。
 
-本次界面修改尚未提交或推送 GitHub，也尚未部署生产。当前分支为 `codex/buyer-desktop-layout`；提交时不要纳入本地 `TASK_STATE.md` 的其他历史改动和 `output/` 验收产物，需先复核本次差异范围。老板新增长期要求：每次任务结束必须更新概要及其新要求，确保后续智能体可按最小接管包直接继续。
+本次界面修改已提交并推送到 `codex/buyer-desktop-layout`，精确提交为 `84691fbaef7f370400b30f2a6778b29d8f767077`。GitHub Actions CI run `33256017529` 全部通过，包括订单/仓库验证、三套镜像构建和订单镜像实际启动冒烟。
+
+生产已部署该精确提交。候选源码包 SHA-256 为 `1d3ac8539cf45324a56c7d41852acfe62ac877e0206b95c6d0ef6251e71b664f`；发布前备份位于 `/root/jiawang-backups/20260829-233636-ui-pagination-84691fb`，哈希全部通过。上线订单镜像摘要为 `sha256:1d527fac2b746f48a667ba9dbf0a90eabff92acab45962b0c7ac1e5dd17246ee`；仓库 Web/Worker 未变，摘要分别为 `sha256:89ccfa76722f363d4b3b507fce95f123174e1712033aee3327dd3c749568f853` 和 `sha256:2764a1533ca58095ebf1d5009f7a4448cf6483eadba6518f955270a8d8eb12d9`。
+
+切换输出 `CUTOVER_HEALTHY`，终检输出 `FINALIZE_PASS`。两库 `quickCheck=ok`，订单商品 23/有效 22、图片 50 且缺失 0、待处理/失败媒体 0；仓库发布商品 22、资源 50、同步待处理/死信 0。五个服务均为 `running`、`restart=0`，网关保持 `127.0.0.1:8080:80`；公网健康接口 200，买家和配送员入口未登录时返回 307。
+
+截图任务继续暂停，登录后的浏览器视觉验收未执行。独立 reviewer/acceptance 工具仍因参数解析错误不可用；旧镜像、生产卷和备份不得清理。老板的长期要求仍是：每次任务结束更新概要和新要求，确保后续智能体能直接接管。
 
 ## 2026-08-29 订单生命周期与配送员发布
 
