@@ -34,6 +34,7 @@
     "test:db-bootstrap": "node --import tsx tests/integration/database-concurrent-bootstrap.mts",
     "test:production-data-check": "node tests/integration/production-data-check-runtime.mjs",
     "test:wecom-mentions": "node --import tsx tests/integration/wecom-mentions.mts",
+    "test:courier-payment": "node tests/integration/courier-payment-contract.mjs",
     "worker:media": "tsx scripts/media-worker.ts",
     "test:customer-profile-address": "node tests/e2e/customer-profile-address-flow.mjs",
     "test:order-status-zh": "node --experimental-strip-types tests/e2e/order-status-zh-flow.mjs",

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const payment=fs.readFileSync(new URL('../../app/api/orders/[id]/payment-confirm/route.ts',import.meta.url),'utf8');
+const delivery=fs.readFileSync(new URL('../../app/api/courier/orders/[id]/route.ts',import.meta.url),'utf8');
+const couriers=fs.readFileSync(new URL('../../app/api/couriers/route.ts',import.meta.url),'utf8');
+assert.ok(payment.includes("method==='wechat'&&!process.env.WECHAT_PAY_MERCHANT_ID"));
+assert.ok(payment.includes("method==='alipay'&&!process.env.ALIPAY_APP_ID"));
+assert.ok(payment.includes('commitOrderPoints(db,id)'));
+assert.ok(delivery.includes("action==='deliver'&&!proof"));
+assert.ok(delivery.includes('completeOrderPoints(db,id)'));
+assert.ok(couriers.includes("role='courier'"));
+assert.ok(couriers.includes('hashPassword(password)'));
+console.log('courier and payment contract PASS');
