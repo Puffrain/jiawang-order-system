@@ -1,7 +1,7 @@
 # First Managed Baseline Plan
 
 资源等级：重型
-当前目标：修复独立审查发现的发布安全问题，完成可部署候选版和公开 GitHub 资料。
+当前目标：维护已部署的订单生命周期与配送员版本，补齐独立复核和发布工具改进。
 
 ## 里程碑
 
@@ -11,10 +11,10 @@
 4. `completed` 修复迁移后故障处理、终检阻断、订单非 root 和 CI 覆盖。
 5. `completed` 新增中英文 README，统一项目状态和发布文档。
 6. `completed` PR #1 基线 CI 与 reviewer 复审通过；独立恢复演练通过，但 acceptance 发现订单镜像默认入口失败。
-7. `in_progress` 运行期 pnpm/Corepack 问题和镜像实际启动 CI 已通过，等待 reviewer 与 acceptance 最终结论。
-8. `completed` 老板批准 `baseline-v2`，完成备份、可信构建、数据原卷迁移、健康和数据终检。
-9. `in_progress` 补做远程部署独立 reviewer/acceptance，并将网关 8080 端口纳入正式发布契约。
-10. `pending` 独立复核通过后清理旧镜像，保留已校验备份和当前不可变镜像。
+7. `completed` 运行期 pnpm/Corepack 问题已改为 Node 直接启动，并由 CI 的实际镜像启动检查覆盖。
+8. `completed` 老板批准 `order-lifecycle-courier-20260829-r2`，完成可信构建、生产备份、数据原卷迁移、健康和数据终检。
+9. `in_progress` 对本次远程发布完成独立 reviewer/acceptance 和公网 HTTPS 浏览器抽检；将无主机 Node 的 Docker 预检支持纳入单独改进。
+10. `pending` 独立复核通过且得到清理批准后，清理旧候选镜像；始终保留已校验备份、命名卷和当前不可变镜像。
 
 ## 停止条件
 
