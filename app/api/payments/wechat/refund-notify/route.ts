@@ -11,8 +11,8 @@ export async function POST(request: Request) {
     const config = getWechatPayConfig();
     const input = { timestamp: request.headers.get("Wechatpay-Timestamp") || "", nonce: request.headers.get("Wechatpay-Nonce") || "", signature: request.headers.get("Wechatpay-Signature") || "", serial: request.headers.get("Wechatpay-Serial") || "", body };
     if (!verifyWechatNotification(input, config.publicKey, config.publicKeyId)) return NextResponse.json({ code: "FAIL", message: "签名验证失败" }, { status: 401 });
-    const envelope = JSON.parse(body) as { id?: string; resource?: { ciphertext?: string; nonce?: string; associated_data?: string } };
-    if (!envelope.id || !envelope.resource?.ciphertext) return NextResponse.json({ code: "SUCCESS", message: "忽略通知" });
+    const envelope = JSON.parse(body) as { id?: string; event_type?: string; resource?: { ciphertext?: string; nonce?: string; associated_data?: string } };
+    if (!envelope.id || envelope.event_type !== "REFUND.SUCCESS" || !envelope.resource?.ciphertext) return NextResponse.json({ code: "SUCCESS", message: "忽略通知" });
     notificationId = envelope.id;
     const result = db.prepare("INSERT OR IGNORE INTO wechat_pay_notifications(notification_id,event_type,resource_type,resource_id,payload_hash) VALUES(?,?,?,?,?)").run(envelope.id, "REFUND.SUCCESS", "encrypt-resource", envelope.id, hashPayload(body));
     inserted = Boolean(result.changes);

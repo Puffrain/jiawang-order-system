@@ -1,5 +1,13 @@
 # Handoff
 
+## 2026-09-01 并发退款保护与最终本地验收
+
+本轮新增退款竞态保护：`wechat_refunds` 对每个订单只允许一条全额退款记录，新增迁移脚本和幂等迁移测试；退款接口在并发唯一约束冲突时返回已有记录，不重复调用微信退款。支付成功和退款成功通知在重复到达时分别校验交易号、退款号完全一致，小程序支付按钮继续由服务端能力接口控制。
+
+本地验证证据：`pnpm run test:migration-wechat-payments`、`pnpm run test:wechat-payment-state`、`pnpm run test:courier-payment`、`pnpm run test:miniprogram-contract`、`pnpm run typecheck`、`pnpm run scan:secrets` 和 `git diff --check` 均通过。当前改动尚未部署服务器；生产环境仍保持上一版运行状态，未修改商品、图片、媒体或数据库。
+
+下一步：提交并推送当前分支后，再按受控流程部署；真实微信登录、支付、退款和开发者工具验收仍标记 BLOCKED，直到服务器补齐 AppID/Secret、支付公钥与私钥权限、合法域名及开发者工具服务端口。
+
 ## 2026-08-31 最终复核阻塞
 
 本地代码验收已通过：lint（0 error，3 条既有 warning）、typecheck、微信支付契约、配送员/支付契约、小程序契约、部署配置、密钥扫描、数据库并发启动和 `next build --webpack` 均通过。GitHub 分支 `release/v1.5.0-mini-courier` 已推送提交 `1115428`，正式标签 `v1.5.0` 仍未移动。

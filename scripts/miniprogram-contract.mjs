@@ -32,4 +32,8 @@ if (!courierLogin.includes('sessionToken')) throw new Error('courier login must 
 const courierPage = fs.readFileSync(path.join(root, 'miniprogram/pages/courier-orders/courier-orders.js'), 'utf8');
 for (const marker of ['/api/courier/orders', "action === 'deliver'", "action === 'fail'"]) if (!courierPage.includes(marker)) throw new Error('courier page contract missing ' + marker);
 if (/courierFailReason|courierSigner/.test(courierPage)) throw new Error('courier proof must be entered through a modal');
+const ordersPage = fs.readFileSync(path.join(root, 'miniprogram/pages/orders/orders.js'), 'utf8');
+const ordersView = fs.readFileSync(path.join(root, 'miniprogram/pages/orders/orders.wxml'), 'utf8');
+for (const marker of ["paymentAvailable: false", "/api/payments/capabilities", "capabilities.wechat && capabilities.wechat.available"]) if (!ordersPage.includes(marker)) throw new Error('payment availability contract missing ' + marker);
+if (!ordersView.includes("paymentAvailable && item.status === 'pending_payment'")) throw new Error('payment button must be server-capability gated');
 console.log('miniprogram contract: required assets, API contract, and secret boundaries verified');

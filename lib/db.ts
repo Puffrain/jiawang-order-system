@@ -159,6 +159,7 @@ db.exec(`
     total_fen INTEGER NOT NULL, reason TEXT, status TEXT NOT NULL DEFAULT 'created',
     success_at TEXT, failure_code TEXT, requested_by TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ,UNIQUE(order_id)
   );
   CREATE INDEX IF NOT EXISTS idx_wechat_refund_order ON wechat_refunds(order_id,status,updated_at);
   CREATE TABLE IF NOT EXISTS wechat_pay_notifications (
@@ -287,6 +288,7 @@ ensureColumn("orders", "customer_received_at", "TEXT");
 ensureColumn("orders", "wechat_transaction_id", "TEXT");
 ensureColumn("orders", "refunded_at", "TEXT");
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_wechat_transaction ON orders(wechat_transaction_id) WHERE wechat_transaction_id IS NOT NULL");
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wechat_refund_one_per_order ON wechat_refunds(order_id)");
 db.exec("CREATE INDEX IF NOT EXISTS idx_orders_courier ON orders(courier_user_id,fulfillment_status,updated_at)");
 db.exec("CREATE TABLE IF NOT EXISTS order_revisions (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, version INTEGER NOT NULL, snapshot_json TEXT NOT NULL, reason TEXT NOT NULL, actor_user_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(order_id,version))");
 db.exec("CREATE INDEX IF NOT EXISTS idx_order_revisions_order ON order_revisions(order_id,version)");

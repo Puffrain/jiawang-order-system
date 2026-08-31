@@ -1,5 +1,12 @@
 # 小程序接入任务状态
 
+## 2026-09-01 支付退款并发保护收尾
+
+- PASS：全额退款增加 `UNIQUE(order_id)` 约束和迁移 `003_wechat_refund_single_order.sql`；历史重复退款不会被自动删除，迁移会明确停止并报告订单号。
+- PASS：退款接口遇到并发唯一约束冲突时复用已有退款记录，不会重复调用微信退款；支付和退款重复通知要求交易号/退款号一致。
+- PASS：`test:migration-wechat-payments`、`test:wechat-payment-state`、`test:courier-payment`、`test:miniprogram-contract`、`typecheck`、`scan:secrets` 全部通过；`git diff --check` 通过。
+- NOT RUN：本轮未重新部署服务器；当前线上商品、媒体和数据库数据保持不变，真实微信登录、支付、退款仍受平台资料和开发者工具条件限制。
+
 ## 2026-08-31 微信支付接口版本部署
 
 - PASS：支付接口和小程序支付能力判断已提交 `01a4315` 并推送到 `release/v1.5.0-mini-courier`；未移动 `v1.5.0` 标签。

@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS wechat_refunds (
   out_refund_no TEXT NOT NULL UNIQUE, refund_id TEXT UNIQUE, amount_fen INTEGER NOT NULL,
   total_fen INTEGER NOT NULL, reason TEXT, status TEXT NOT NULL DEFAULT 'created',
   success_at TEXT, failure_code TEXT, requested_by TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(order_id)
 );
 CREATE INDEX IF NOT EXISTS idx_wechat_refund_order ON wechat_refunds(order_id, status, updated_at);
 CREATE TABLE IF NOT EXISTS wechat_pay_notifications (
