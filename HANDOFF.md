@@ -1,5 +1,9 @@
 # Handoff
 
+## 2026-08-31 微信支付接口部署收尾
+
+提交 `01a4315` 已推送到 `release/v1.5.0-mini-courier`，`v1.5.0` 未移动。服务器已保留备份 `/root/jiawang-backups/20260831-211440-wechat-pay-01`，订单 Web 和媒体 Worker 切换到 `jiawang-commerce-order:wechat-pay-01`；仓库服务、网关和商品/媒体数据卷未重建。公网两个健康接口均为 200，订单商品 23、图片 50、缺失 0，仓库已发布商品 22、资源 50，同步队列为 0，订单容器重启次数为 0。未配置完整微信资料时支付能力继续关闭；真实登录、支付和退款联调仍需微信平台配置。
+
 ## 2026-08-31 支付安全收尾与数据复核
 
 分支 `release/v1.5.0-mini-courier` 最新提交为 `d85db15`（`fix: fail closed for incomplete wechat payment config`），已推送到 `Puffrain/jiawang-order-system`；正式标签 `v1.5.0` 仍指向 `111c33d`，未覆盖或移动。支付能力现在要求商户号、32 位 API v3 密钥、证书序列号、实际存在的私钥和微信支付公钥文件、公钥 ID 以及 HTTPS 回调地址，资料不完整时返回 `NOT_CONFIGURED`；真实支付意图、通知回调和退款联调尚未实现，不能宣称真实支付已上线。
