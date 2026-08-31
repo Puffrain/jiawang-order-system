@@ -2,7 +2,7 @@
 
 ## 2026-08-31 小程序与配送员版本部署
 
-已在既有公开仓库 `Puffrain/jiawang-order-system` 的分支 `release/v1.5.0-mini-courier` 上继续迭代并推送提交 `12c24e8`，未新建仓库，也未覆盖远程 `main`。订单 Web 服务和媒体 Worker 已切换到 `jiawang-commerce-order:mini-wechat-633ad5d`；仓库 Web、仓库 Worker 和网关保持原稳定镜像，生产命名卷均保留。服务器恢复点为 `/root/jiawang-backups/20260831-172653-mini-wechat-633ad5d`，切换前 Compose 副本为 `/opt/jiawang-commerce-new/compose.server.yaml.before-12c24e8`。
+已在既有公开仓库 `Puffrain/jiawang-order-system` 的分支 `release/v1.5.0-mini-courier` 上继续迭代并推送提交 `111c33d`，版本标签为 `v1.5.0`，未新建仓库，也未覆盖远程 `main`。订单 Web 服务和媒体 Worker 已切换到 `jiawang-commerce-order:mini-wechat-633ad5d`；仓库 Web、仓库 Worker 和网关保持原稳定镜像，生产命名卷均保留。服务器恢复点为 `/root/jiawang-backups/20260831-172653-mini-wechat-633ad5d`，切换前 Compose 副本为 `/opt/jiawang-commerce-new/compose.server.yaml.before-12c24e8`。
 
 本次只读数据验收：订单库 `quick_check=ok`，商品 23、有效商品 22、商品图片 50、图片文件缺失 0、媒体同步待处理和失败均为 0；仓库库 `quick_check=ok`，已发布商品 22、已发布资源 50、同步待处理和死信均为 0。仓库媒体卷当前有 100 个文件。没有删除商品、图片、媒体、订单、用户或任何生产数据卷；用户虽允许删除测试用户数据，但本次无需删除。
 
