@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS ai_profiles (id TEXT PRIMARY KEY,name TEXT NOT NULL,provider TEXT NOT NULL CHECK(provider IN ('deepseek','openai','openai_compatible')),active_revision_id TEXT,deleted_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ai_profile_revisions (id TEXT PRIMARY KEY,profile_id TEXT NOT NULL REFERENCES ai_profiles(id) ON DELETE CASCADE,revision INTEGER NOT NULL,encrypted_config TEXT NOT NULL,probe_result_json TEXT,created_at TEXT NOT NULL,UNIQUE(profile_id,revision));
+CREATE TABLE IF NOT EXISTS active_ai_profile (singleton INTEGER PRIMARY KEY CHECK(singleton=1),profile_id TEXT NOT NULL REFERENCES ai_profiles(id),revision_id TEXT NOT NULL REFERENCES ai_profile_revisions(id),updated_at TEXT NOT NULL);
+ALTER TABLE import_jobs ADD COLUMN ai_profile_id TEXT;
+ALTER TABLE import_jobs ADD COLUMN ai_profile_revision_id TEXT;
+ALTER TABLE import_jobs ADD COLUMN ai_config_snapshot TEXT;
+ALTER TABLE import_jobs ADD COLUMN ai_profile_name TEXT;
+ALTER TABLE import_jobs ADD COLUMN ai_model TEXT;
+ALTER TABLE import_jobs ADD COLUMN ai_profile_revision INTEGER;
+ALTER TABLE import_jobs ADD COLUMN ai_version_fingerprint TEXT;

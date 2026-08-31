@@ -1,0 +1,148 @@
+name: jiawang-sync-preview-${PREVIEW_ID:?set PREVIEW_ID}
+
+x-warehouse-environment: &warehouse_environment
+  NODE_ENV: production
+  NEXT_PUBLIC_BASE_PATH: /warehouse
+  DATABASE_PATH: /data/db/app.sqlite
+  DATABASE_URL: file:/data/db/app.sqlite
+  DATA_DIR: /data
+  MEDIA_DIR: /media
+  TEMP_DIR: /data/tmp
+  TMPDIR: /data/tmp
+  BACKUP_OUT_DIR: /data/backups
+  PIPELINE_MEDIA_ROOT: /media
+  APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN}
+  REQUIRE_ORIGIN: "true"
+  REQUIRE_CSRF: "true"
+  APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}
+  INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
+  ORDER_INTERNAL_URL: http://order-web:3000
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+  DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
+  DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-}
+  DEEPSEEK_TEXT_MODEL: ${DEEPSEEK_TEXT_MODEL:-}
+  DEEPSEEK_VISION_MODEL: ${DEEPSEEK_VISION_MODEL:-}
+  DEEPSEEK_ALLOWED_HOSTS: ${DEEPSEEK_ALLOWED_HOSTS:-}
+
+services:
+  order-volume-init:
+    image: ${ORDER_CANDIDATE_IMAGE:?set ORDER_CANDIDATE_IMAGE}
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/uploads && chown -R 1001:1001 /data"]
+    restart: "no"
+    volumes:
+      - order_data:/data
+
+  order-web:
+    image: ${ORDER_CANDIDATE_IMAGE:?set ORDER_CANDIDATE_IMAGE}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: file:/data/app.db
+      UPLOAD_DIR: /data/uploads
+      NODE_ENV: production
+      SESSION_COOKIE_SECURE: "false"
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+      OWNER_PHONE: ${OWNER_PHONE:?set OWNER_PHONE}
+      OWNER_PHONE_ALIASES: ${OWNER_PHONE_ALIASES:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:?set OWNER_PASSWORD}
+      OWNER_NAME: ${OWNER_NAME:-预览管理员}
+      SMS_PROVIDER: ${SMS_PROVIDER:-aliyun}
+      SMS_PREVIEW_MODE: ${SMS_PREVIEW_MODE:?set SMS_PREVIEW_MODE}
+      ALIYUN_SMS_ACCESS_KEY_ID: ${ALIYUN_SMS_ACCESS_KEY_ID:?set ALIYUN_SMS_ACCESS_KEY_ID}
+      ALIYUN_SMS_ACCESS_KEY_SECRET: ${ALIYUN_SMS_ACCESS_KEY_SECRET:?set ALIYUN_SMS_ACCESS_KEY_SECRET}
+      ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:?set ALIYUN_SMS_SIGN_NAME}
+      ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:?set ALIYUN_SMS_TEMPLATE_CODE}
+      ALIYUN_SMS_REGION_ID: ${ALIYUN_SMS_REGION_ID:-cn-hangzhou}
+      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
+      WECOM_BOT_WEBHOOK_URL: ${WECOM_BOT_WEBHOOK_URL:-}
+      WECOM_BOT_MENTION_MOBILE: ${WECOM_BOT_MENTION_MOBILE:-}
+      WECHAT_MINI_APPID: ${WECHAT_MINI_APPID:-}
+      WECHAT_MINI_SECRET: ${WECHAT_MINI_SECRET:-}
+      WAREHOUSE_INTERNAL_URL: http://warehouse-web:3000
+      SEED_SAMPLE_PRODUCTS: ${SEED_SAMPLE_PRODUCTS:-false}
+    volumes:
+      - order_data:/data
+    expose: ["3000"]
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      order-volume-init:
+        condition: service_completed_successfully
+
+  order-media-worker:
+    image: ${ORDER_CANDIDATE_IMAGE:?set ORDER_CANDIDATE_IMAGE}
+    restart: unless-stopped
+    command: ["node", "--import", "tsx", "scripts/media-worker.ts"]
+    environment:
+      DATABASE_URL: file:/data/app.db
+      UPLOAD_DIR: /data/uploads
+      NODE_ENV: production
+      INTEGRATION_SHARED_SECRET: ${INTEGRATION_SHARED_SECRET:?set INTEGRATION_SHARED_SECRET}
+      WAREHOUSE_INTERNAL_URL: http://warehouse-web:3000
+      MEDIA_WORKER_POLL_MS: ${MEDIA_WORKER_POLL_MS:-5000}
+      MEDIA_WORKER_BATCH_SIZE: ${MEDIA_WORKER_BATCH_SIZE:-4}
+    volumes:
+      - order_data:/data
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      order-web:
+        condition: service_started
+      warehouse-web:
+        condition: service_healthy
+      order-volume-init:
+        condition: service_completed_successfully
+
+  warehouse-volume-init:
+    image: ${WAREHOUSE_WEB_CANDIDATE_IMAGE:?set WAREHOUSE_WEB_CANDIDATE_IMAGE}
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data/db /data/tmp /data/backups /media && chown -R 1000:1000 /data /media"]
+    restart: "no"
+    volumes: &warehouse_volumes
+      - warehouse_data:/data
+      - warehouse_media:/media
+
+  warehouse-web:
+    image: ${WAREHOUSE_WEB_CANDIDATE_IMAGE:?set WAREHOUSE_WEB_CANDIDATE_IMAGE}
+    restart: unless-stopped
+    environment: *warehouse_environment
+    volumes: *warehouse_volumes
+    expose: ["3000"]
+    depends_on:
+      order-web:
+        condition: service_started
+      warehouse-volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/warehouse/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  warehouse-worker:
+    image: ${WAREHOUSE_WORKER_CANDIDATE_IMAGE:?set WAREHOUSE_WORKER_CANDIDATE_IMAGE}
+    restart: unless-stopped
+    environment: *warehouse_environment
+    volumes: *warehouse_volumes
+    depends_on:
+      warehouse-web:
+        condition: service_healthy
+
+  gateway:
+    image: docker.m.daocloud.io/library/nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PREVIEW_PORT:-3113}:80"
+    volumes:
+      - ./proxy/integration.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - order-web
+      - warehouse-web
+
+volumes:
+  order_data:
+    name: jiawang-sync-preview-${PREVIEW_ID}-order-data
+  warehouse_data:
+    name: jiawang-sync-preview-${PREVIEW_ID}-warehouse-data
+  warehouse_media:
+    name: jiawang-sync-preview-${PREVIEW_ID}-warehouse-media

@@ -1,0 +1,21 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/home/home",
+    "pages/product/product",
+    "pages/cart/cart",
+    "pages/orders/orders",
+    "pages/address/address",
+    "pages/courier-login/courier-login",
+    "pages/courier-orders/courier-orders"
+  ],
+  "window": {
+    "navigationBarTitleText": "佳旺订单系统",
+    "navigationBarBackgroundColor": "#111827",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f3f4f6",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

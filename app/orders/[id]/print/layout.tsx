@@ -1,0 +1,1 @@
+export default function PrintLayout({children}:{children:React.ReactNode}){return <>{children}<style>{`@page{size:A4 portrait;margin:0} @media print{html,body{width:210mm;background:#fff!important} body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`}</style></>}

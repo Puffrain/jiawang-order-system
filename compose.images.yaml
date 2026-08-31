@@ -1,0 +1,19 @@
+services:
+  order-volume-init:
+    image: ${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}
+    build: null
+  order-web:
+    image: ${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}
+    build: null
+  order-media-worker:
+    image: ${ORDER_IMAGE:?set ORDER_IMAGE to an immutable image ID or repository digest}
+    build: null
+  warehouse-volume-init:
+    image: ${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE to an immutable image ID or repository digest}
+    build: null
+  warehouse-web:
+    image: ${WAREHOUSE_WEB_IMAGE:?set WAREHOUSE_WEB_IMAGE to an immutable image ID or repository digest}
+    build: null
+  warehouse-worker:
+    image: ${WAREHOUSE_WORKER_IMAGE:?set WAREHOUSE_WORKER_IMAGE to an immutable image ID or repository digest}
+    build: null

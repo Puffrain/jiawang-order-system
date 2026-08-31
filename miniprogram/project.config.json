@@ -1,0 +1,9 @@
+{
+  "description": "佳旺订单系统微信小程序",
+  "setting": { "es6": true, "minified": true, "urlCheck": true, "compileHotReLoad": true },
+  "compileType": "miniprogram",
+  "libVersion": "3.7.0",
+  "appid": "",
+  "projectname": "jiawang-order-miniapp",
+  "condition": {}
+}

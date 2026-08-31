@@ -1,0 +1,9 @@
+<view class="page login-page">
+  <view class="brand-mark">佳旺</view>
+  <view class="title">佳旺订单系统</view>
+  <view class="muted intro">美容美发用品批发 · 商品、订单、配送一体化</view>
+  <button class="primary login-button" loading="{{loading}}" bindtap="login">微信登录</button>
+  <button class="ghost courier-entry" bindtap="courierLogin">配送员入口</button>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <view class="muted legal">登录即表示你同意使用本系统处理订单和收货信息</view>
+</view>

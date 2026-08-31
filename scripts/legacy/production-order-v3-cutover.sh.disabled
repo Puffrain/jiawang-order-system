@@ -1,0 +1,47 @@
+#!/bin/sh
+# HISTORICAL ONLY. DO NOT EXECUTE. See scripts/legacy/README.md.
+set -eu
+
+app_dir=/opt/jiawang-commerce-new
+backup_dir=/root/jiawang-backups/20260818-045822-cross-system-media-worker-v2
+current_override="$backup_dir/compose.before-media-v3.yaml"
+next_override=/tmp/compose.deploy-20260818-v3.yaml
+
+cd "$app_dir"
+cp compose.images.yaml "$current_override"
+docker cp /tmp/sqlite-online-backup.cjs jiawang-commerce-order-web-1:/app/sqlite-online-backup.cjs
+docker exec jiawang-commerce-order-web-1 node /app/sqlite-online-backup.cjs /data/app.db /data/order-before-media-v3.db
+docker cp jiawang-commerce-order-web-1:/data/order-before-media-v3.db "$backup_dir/order-before-media-v3.db"
+docker exec jiawang-commerce-order-web-1 rm -f /data/order-before-media-v3.db /app/sqlite-online-backup.cjs
+sha256sum "$backup_dir/order-before-media-v3.db" > "$backup_dir/order-before-media-v3.sha256"
+
+docker tag jiawang-commerce-order:deploy-20260818 jiawang-commerce-order:rollback-20260818-v2
+docker tag jiawang-commerce-order:candidate-20260818-v3 jiawang-commerce-order:deploy-20260818-v3
+sed 's/jiawang-commerce-order:deploy-20260818/jiawang-commerce-order:deploy-20260818-v3/g' compose.images.yaml > "$next_override"
+install -m 644 "$next_override" compose.images.yaml
+
+if ! docker compose -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate --no-deps order-web order-media-worker; then
+  cp "$current_override" compose.images.yaml
+  docker compose -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate --no-deps order-web order-media-worker
+  echo ORDER_V3_START_FAILED_ROLLED_BACK
+  exit 1
+fi
+
+attempt=0
+while [ "$attempt" -lt 18 ]; do
+  if curl -fsS http://127.0.0.1:8080/api/health >/dev/null 2>&1 && [ "$(docker inspect jiawang-commerce-order-media-worker-1 --format '{{.State.Status}}')" = running ]; then
+    break
+  fi
+  attempt=$((attempt + 1))
+  sleep 5
+done
+if [ "$attempt" -ge 18 ]; then
+  cp "$current_override" compose.images.yaml
+  docker compose -f compose.yaml -f compose.images.yaml up -d --no-build --force-recreate --no-deps order-web order-media-worker
+  echo ORDER_V3_HEALTH_FAILED_ROLLED_BACK
+  exit 1
+fi
+
+docker inspect jiawang-commerce-order-web-1 jiawang-commerce-order-media-worker-1 --format '{{.Name}} {{.Config.Image}} {{.State.Status}} restart={{.RestartCount}}'
+curl -fsS http://127.0.0.1:8080/api/health
+printf '\nORDER_V3_HEALTHY\n'

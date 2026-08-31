@@ -1,0 +1,7 @@
+services:
+  order-web:
+    image: jiawang-commerce-order:brand-20260814
+    build: null
+  warehouse-web:
+    image: jiawang-commerce-warehouse-web:brand-20260814
+    build: null

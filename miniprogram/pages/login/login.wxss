@@ -1,0 +1,7 @@
+.login-page { padding-top: 180rpx; text-align: center; }
+.brand-mark { width: 132rpx; height: 132rpx; line-height: 132rpx; margin: 0 auto 36rpx; border-radius: 28rpx; background: #f97316; color: #fff; font-size: 42rpx; font-weight: 700; }
+.intro { margin-top: 16rpx; line-height: 1.7; }
+.login-button { margin-top: 96rpx; height: 92rpx; line-height: 92rpx; }
+.courier-entry { margin-top: 20rpx; }
+.legal { margin-top: 28rpx; font-size: 22rpx; }
+.error { margin-top: 24rpx; color: #b91c1c; }

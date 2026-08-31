@@ -1,0 +1,2 @@
+.small { margin: 0; font-size: 24rpx; }
+.order-card { margin-bottom: 24rpx; }

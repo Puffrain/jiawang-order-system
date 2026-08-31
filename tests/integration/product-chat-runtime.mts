@@ -1,0 +1,53 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import Database from "better-sqlite3";
+import sharp from "sharp";
+
+const root = process.cwd();
+const runtimeDir = path.join(root,".task-runs",`product-chat-${Date.now()}`);
+fs.mkdirSync(runtimeDir,{ recursive: true });
+const dbPath = path.join(runtimeDir,"legacy.db");
+const legacy = new Database(dbPath);
+legacy.exec(`CREATE TABLE products (id TEXT PRIMARY KEY,name TEXT NOT NULL,category TEXT NOT NULL,brand TEXT,description TEXT,status TEXT NOT NULL DEFAULT 'active',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  INSERT INTO products(id,name,category,status,created_at) VALUES ('old-active','old active','test','active','2025-01-01'),('old-inactive','old inactive','test','inactive','2025-01-02');`);
+legacy.close();
+process.env.DATABASE_URL = `file:${dbPath}`;
+process.env.UPLOAD_DIR = path.join(runtimeDir,"uploads");
+const db = (await import("../../lib/db")).default;
+const { saveProduct } = await import("../../lib/product-catalog");
+const oldRows = db.prepare("SELECT id,first_activated_at firstActivatedAt FROM products WHERE id LIKE 'old-%' ORDER BY id").all() as Array<{id:string;firstActivatedAt:string|null}>;
+assert.equal(oldRows.length,2);
+assert.ok(oldRows.every(row => row.firstActivatedAt),"all legacy products must conservatively retain activation history");
+db.prepare("INSERT INTO products(id,name,category,status) VALUES('new-inactive','new inactive','test','inactive')").run();
+assert.equal((db.prepare("SELECT first_activated_at firstActivatedAt FROM products WHERE id='new-inactive'").get() as {firstActivatedAt:string|null}).firstActivatedAt,null);
+const productInput = { name: "runtime product", category: "test", categoryKey: "test", subcategoryKey: null, brand: "", description: "", status: "inactive" as const, skus: [{ skuCode: "RUNTIME-1", specName: "default", basePrice: 10, stock: 5, tiers: [] }] };
+const neverActiveId = saveProduct(null,productInput);
+assert.equal((db.prepare("SELECT first_activated_at firstActivatedAt FROM products WHERE id=?").get(neverActiveId) as {firstActivatedAt:string|null}).firstActivatedAt,null);
+const existingSkuId = (db.prepare("SELECT id FROM product_skus WHERE product_id=?").get(neverActiveId) as {id:string}).id;
+saveProduct(neverActiveId,{...productInput,status:"active",skus:[{...productInput.skus[0],id:existingSkuId}]});
+assert.ok((db.prepare("SELECT first_activated_at firstActivatedAt FROM products WHERE id=?").get(neverActiveId) as {firstActivatedAt:string|null}).firstActivatedAt,"activating through a full edit must atomically record activation history");
+const activeId = saveProduct(null,{...productInput,name:"created active",status:"active",skus:[{...productInput.skus[0],skuCode:"RUNTIME-2"}]});
+assert.ok((db.prepare("SELECT first_activated_at firstActivatedAt FROM products WHERE id=?").get(activeId) as {firstActivatedAt:string|null}).firstActivatedAt,"creating an active product must atomically record activation history");
+const seedRows = db.prepare("SELECT first_activated_at firstActivatedAt FROM products WHERE id IN ('prod-schwarzkopf-dye','prod-loreal-mask','prod-oxidant')").all() as Array<{firstActivatedAt:string|null}>;
+const expectSamples = process.env.SEED_SAMPLE_PRODUCTS === "true" || (process.env.NODE_ENV !== "production" && process.env.SEED_SAMPLE_PRODUCTS !== "false");
+assert.equal(seedRows.length,expectSamples?3:0,"production must not create sample products unless explicitly enabled");
+assert.ok(seedRows.every(row=>row.firstActivatedAt),"explicitly seeded active products must retain activation history");
+
+const { bulkPayloadHash } = await import("../../lib/chat-batch");
+const batchHash = bulkPayloadHash({ buyerUserIds: ["buyer-b","buyer-a"], type: "text", content: "hello" });
+assert.equal(batchHash,bulkPayloadHash({ buyerUserIds: ["buyer-a","buyer-b"], type: "text", content: "hello" }),"recipient order must not change batch identity");
+assert.notEqual(batchHash,bulkPayloadHash({ buyerUserIds: ["buyer-a","buyer-b","buyer-c"], type: "text", content: "hello" }),"changing recipients must change batch identity");
+
+const { saveChatImage } = await import("../../lib/chat-media");
+const png = await sharp({ create: { width: 2, height: 3, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 1 } } }).png().toBuffer();
+const saved = await saveChatImage(new File([Uint8Array.from(png)],"valid.png",{ type: "image/png" }));
+assert.equal(saved.width,2);
+assert.equal(saved.height,3);
+assert.equal(fs.existsSync(saved.fullPath),true);
+const forged = Buffer.concat([png.subarray(0,24),Buffer.from("broken payload"),png.subarray(-12)]);
+await assert.rejects(() => saveChatImage(new File([Uint8Array.from(forged)],"forged.png",{ type: "image/png" })));
+
+db.close();
+fs.rmSync(runtimeDir,{ recursive: true, force: true });
+console.log("PASS product activation migration and chat image runtime");

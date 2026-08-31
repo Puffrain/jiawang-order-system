@@ -1,0 +1,33 @@
+{
+  "stack": "nextjs-fullstack",
+  "install": "if [ -d node_modules ] && [ ! -d node_modules/.pnpm ]; then rm -rf node_modules package-lock.json; fi && pnpm install --no-frozen-lockfile",
+  "lint": "pnpm exec eslint --fix --max-warnings 0 . && node scripts/platform-lint.mjs",
+  "check": "pnpm run build",
+  "services": {
+    "web": {
+      "install": "pnpm install --no-frozen-lockfile",
+      "lint": "pnpm exec eslint --fix --max-warnings 0 . && node scripts/platform-lint.mjs",
+      "check": "pnpm run build",
+      "dev": "pnpm run dev",
+      "port": 3000,
+      "health": "/api/health"
+    },
+    "warehouse": {
+      "cwd": "佳旺仓库系统",
+      "install": "pnpm install --no-frozen-lockfile",
+      "lint": "pnpm run lint",
+      "check": "pnpm run build",
+      "dev": "pnpm exec next dev -H 0.0.0.0 -p 3001",
+      "port": 3001,
+      "health": "/warehouse/api/health"
+    }
+  },
+  "preview": "web",
+  "protect": [
+    "eslint.config.mjs",
+    "scripts/platform-lint.mjs"
+  ],
+  "layers": [
+    "nextjs-fullstack"
+  ]
+}
