@@ -1,5 +1,13 @@
 # Handoff
 
+## 2026-08-31 支付安全收尾与数据复核
+
+分支 `release/v1.5.0-mini-courier` 最新提交为 `d85db15`（`fix: fail closed for incomplete wechat payment config`），已推送到 `Puffrain/jiawang-order-system`；正式标签 `v1.5.0` 仍指向 `111c33d`，未覆盖或移动。支付能力现在要求商户号、32 位 API v3 密钥、证书序列号、实际存在的私钥和微信支付公钥文件、公钥 ID 以及 HTTPS 回调地址，资料不完整时返回 `NOT_CONFIGURED`；真实支付意图、通知回调和退款联调尚未实现，不能宣称真实支付已上线。
+
+服务器 `/opt/jiawang-commerce-new` 当前五个服务均为 running，订单和仓库公网健康接口均返回 200。只读数据复核通过：订单库 quick_check=ok，商品 23、有效商品 22、图片 50、缺失 0、订单 4、媒体待处理/失败 0；仓库库 quick_check=ok，商品 22、已发布商品 22、关联资源 50、流水线资源 100、同步待处理/死信 0。三个生产命名卷和既有恢复备份均保留，未删除商品、图片、媒体或其他生产数据。
+
+本地临时压缩包和临时脚本已清理，未进入 Git。后续仍需在受控服务器环境补齐真实微信 AppID/Secret、合法域名和完整支付商户资料，再进行微信开发者工具及沙箱/小额支付联调。
+
 ## 2026-08-31 小程序与配送员版本部署
 
 已在既有公开仓库 `Puffrain/jiawang-order-system` 的分支 `release/v1.5.0-mini-courier` 上继续迭代并推送最新提交 `1098592`；版本标签 `v1.5.0` 仍指向已发布的 `111c33d`，未新建仓库，也未覆盖远程 `main`。订单 Web 服务和媒体 Worker 已切换到 `jiawang-commerce-order:mini-wechat-633ad5d`；仓库 Web、仓库 Worker 和网关保持原稳定镜像，生产命名卷均保留。服务器恢复点为 `/root/jiawang-backups/20260831-172653-mini-wechat-633ad5d`，切换前 Compose 副本为 `/opt/jiawang-commerce-new/compose.server.yaml.before-12c24e8`。
