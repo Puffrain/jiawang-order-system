@@ -7,6 +7,7 @@ export type WechatPayConfigStatus = {
 
 export function getWechatPayConfigStatus(env: NodeJS.ProcessEnv = process.env): WechatPayConfigStatus {
   const missing: string[] = [];
+  if (!env.WECHAT_MINI_APPID?.trim()) missing.push('WECHAT_MINI_APPID');
   if (!env.WECHAT_PAY_MERCHANT_ID?.trim()) missing.push('WECHAT_PAY_MERCHANT_ID');
   if (!env.WECHAT_PAY_API_V3_KEY || env.WECHAT_PAY_API_V3_KEY.length !== 32) missing.push('WECHAT_PAY_API_V3_KEY');
   if (!env.WECHAT_PAY_CERT_SERIAL?.trim()) missing.push('WECHAT_PAY_CERT_SERIAL');

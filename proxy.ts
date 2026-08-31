@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_MARKER_COOKIE, verifyAuthMarker } from "@/lib/auth-marker";
 import { securityHeaders } from "@/lib/security";
 
-const publicPaths = ["/", "/admin/login", "/buyer/login", "/customer-entry", "/api/health", "/api/qr", "/api/auth/admin/login", "/api/auth/admin/send-reset-code", "/api/auth/admin/reset-password", "/api/auth/buyer/send-code", "/api/auth/buyer/login", "/api/auth/buyer/register", "/api/auth/buyer/password-login", "/api/auth/buyer/reset-password", "/api/auth/wechat/login", "/api/luffy-platform-error"];
+const publicPaths = ["/", "/admin/login", "/buyer/login", "/customer-entry", "/api/health", "/api/qr", "/api/auth/admin/login", "/api/auth/admin/send-reset-code", "/api/auth/admin/reset-password", "/api/auth/buyer/send-code", "/api/auth/buyer/login", "/api/auth/buyer/register", "/api/auth/buyer/password-login", "/api/auth/buyer/reset-password", "/api/auth/wechat/login", "/api/payments/wechat/notify", "/api/payments/wechat/refund-notify", "/api/luffy-platform-error"];
 const ownerPrefixes = ["/admin/", "/diagnostics", "/setup-guide", "/orders/", "/api/exports", "/api/docs/setup"];
 
 function withSecurity(response: NextResponse) {
@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest) {
   // 微信小程序登录没有浏览器会话，wx.request 会被标记为跨站请求。
   // 该接口只接收一次性 code，并由微信服务端校验，因此不适用网页 CSRF 来源检查。
   const isWechatLogin = pathname === "/api/auth/wechat/login";
-  if (pathname.startsWith("/api/") && !isWechatLogin && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+  const isWechatCallback = pathname === "/api/payments/wechat/notify" || pathname === "/api/payments/wechat/refund-notify";
+  if (pathname.startsWith("/api/") && !isWechatLogin && !isWechatCallback && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     if (requestHeaders.get("sec-fetch-site") === "cross-site") return withSecurity(NextResponse.json({ error: "请求来源无效" }, { status: 403 }));
     const origin = requestHeaders.get("origin");
     const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
