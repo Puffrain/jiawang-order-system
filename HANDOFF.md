@@ -1,5 +1,15 @@
 # Handoff
 
+## 2026-08-31 小程序与配送员版本部署
+
+已在既有公开仓库 `Puffrain/jiawang-order-system` 的分支 `release/v1.5.0-mini-courier` 上继续迭代并推送提交 `12c24e8`，未新建仓库，也未覆盖远程 `main`。订单 Web 服务和媒体 Worker 已切换到 `jiawang-commerce-order:mini-wechat-633ad5d`；仓库 Web、仓库 Worker 和网关保持原稳定镜像，生产命名卷均保留。服务器恢复点为 `/root/jiawang-backups/20260831-172653-mini-wechat-633ad5d`，切换前 Compose 副本为 `/opt/jiawang-commerce-new/compose.server.yaml.before-12c24e8`。
+
+本次只读数据验收：订单库 `quick_check=ok`，商品 23、有效商品 22、商品图片 50、图片文件缺失 0、媒体同步待处理和失败均为 0；仓库库 `quick_check=ok`，已发布商品 22、已发布资源 50、同步待处理和死信均为 0。仓库媒体卷当前有 100 个文件。没有删除商品、图片、媒体、订单、用户或任何生产数据卷；用户虽允许删除测试用户数据，但本次无需删除。
+
+公网 `https://www.kunshanjiawang.cn/api/health` 与 `https://www.kunshanjiawang.cn/warehouse/api/health` 均返回 200。默认服务器 Compose 和临时发布覆盖均引用新订单镜像，因此容器重启后不会回退。服务器的支付公钥文件已经存在并通过只读挂载提供给订单服务，但 `WECHAT_MINI_APPID`、`WECHAT_MINI_SECRET` 以及支付商户关键配置仍未完整提供，故真实微信登录和真实微信支付不属于本次已验收能力。未配置时接口必须安全失败，Web 端不受影响。
+
+后续最小动作：在微信公众平台和微信支付商户平台完成合法域名、AppID/AppSecret、商户号、API v3 密钥、商户证书序列号和微信支付公钥 ID 的受控服务器配置，再使用真实小程序代码和沙箱/小额支付进行联调。不要把凭据、私钥、公钥或 `.env` 提交到 GitHub。
+
 ## 2026-08-29 订单生命周期与配送员发布
 
 老板已批准发布 `order-lifecycle-courier-20260829-r2`，候选源码为公开仓库 `main` 的 `51f4b1519cd4f14158f30ac9775385af257e9259`。发布前候选包 SHA-256 为 `57660c1bb8da42c12419ebebc8a4611844e097bd54eb863e4da460cd8186efcc`，已在服务器完成核验后再解包。
