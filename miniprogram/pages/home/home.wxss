@@ -13,3 +13,6 @@
 .product-name { margin: 18rpx 18rpx 8rpx; font-weight: 700; line-height: 1.4; }
 .product-card .muted, .price { margin: 0 18rpx; font-size: 23rpx; }
 .price { margin-top: 14rpx; color: #ea580c; font-size: 30rpx; font-weight: 700; }
+.mini-nav { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 8rpx; margin: 28rpx -28rpx -28rpx; padding: 14rpx 20rpx calc(14rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #e8edf1; background: rgba(255,255,255,.96); }
+.mini-nav-item { flex: 1; margin: 0; padding: 12rpx 4rpx; border-radius: 12rpx; background: transparent; color: #74808c; font-size: 23rpx; }
+.mini-nav-item.active { background: #fff4eb; color: #ea580c; }

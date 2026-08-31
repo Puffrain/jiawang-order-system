@@ -10,5 +10,8 @@ Page({
   checkout() {
     if (!this.data.items.length || this.data.submitting) return;
     wx.navigateTo({ url: '/pages/address/address?checkout=1&remark=' + encodeURIComponent(this.data.remark || '') });
-  }
+  },
+  openHome() { wx.reLaunch({ url: '/pages/home/home' }); },
+  openOrders() { wx.reLaunch({ url: '/pages/orders/orders' }); },
+  openAddress() { wx.reLaunch({ url: '/pages/address/address' }); }
 });

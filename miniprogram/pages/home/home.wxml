@@ -6,4 +6,5 @@
   <view wx:if="{{loading}}" class="muted center">正在加载商品...</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
   <view class="product-grid"><view wx:for="{{products}}" wx:key="id" class="product-card card" data-id="{{item.id}}" bindtap="openProduct"><image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill"/><view wx:else class="image-placeholder">佳旺</view><view class="product-name">{{item.name}}</view><view class="muted">{{item.category}} · {{item.totalStock}} 件库存</view><view class="price">¥{{item.skus[0].basePrice}}</view></view></view>
+  <view class="mini-nav"><button class="mini-nav-item active" bindtap="openHome">首页</button><button class="mini-nav-item" bindtap="openCart">购物车</button><button class="mini-nav-item" bindtap="openOrders">订单</button><button class="mini-nav-item" bindtap="openAddress">我的</button></view>
 </view>
