@@ -1,5 +1,11 @@
 # Handoff
 
+## 2026-08-31 最终复核阻塞
+
+本地代码验收已通过：lint（0 error，3 条既有 warning）、typecheck、微信支付契约、配送员/支付契约、小程序契约、部署配置、密钥扫描、数据库并发启动和 `next build --webpack` 均通过。GitHub 分支 `release/v1.5.0-mini-courier` 已推送提交 `1115428`，正式标签 `v1.5.0` 仍未移动。
+
+服务器当前的真实阻塞是支付私钥和文件权限：订单容器环境变量已传入，但 `/opt/jiawang-commerce-new/secrets` 只有 `wechat-pay-public-key.pem`，缺少 `wechat-pay-private-key.pem`；目录为 `700 root:root`，公钥为 `600 root:root`，非 root 订单用户无法读取。补齐私钥后需要在服务器上将目录/文件设为仅订单应用用户可读，再重启订单 Web 和媒体 Worker并验证支付能力接口；不得把文件改成所有用户可读，也不得上传到 GitHub。当前支付会安全返回 `NOT_CONFIGURED`，商品、图片、仓库媒体和 Web 系统不受影响。
+
 ## 2026-08-31 微信支付接口部署收尾
 
 提交 `01a4315` 已推送到 `release/v1.5.0-mini-courier`，`v1.5.0` 未移动。服务器已保留备份 `/root/jiawang-backups/20260831-211440-wechat-pay-01`，订单 Web 和媒体 Worker 切换到 `jiawang-commerce-order:wechat-pay-01`；仓库服务、网关和商品/媒体数据卷未重建。公网两个健康接口均为 200，订单商品 23、图片 50、缺失 0，仓库已发布商品 22、资源 50，同步队列为 0，订单容器重启次数为 0。未配置完整微信资料时支付能力继续关闭；真实登录、支付和退款联调仍需微信平台配置。

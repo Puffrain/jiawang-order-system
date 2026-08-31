@@ -15,6 +15,13 @@
 
 资源等级：重型。
 
+## 2026-08-31 最终复核发现的支付配置阻塞
+
+- BLOCKED：服务器订单容器环境变量已传入微信登录/支付配置，但 `/opt/jiawang-commerce-new/secrets` 当前只有 `wechat-pay-public-key.pem`，缺少 `wechat-pay-private-key.pem`。
+- BLOCKED：服务器 secrets 目录为 `700 root:root`，公钥文件为 `600 root:root`；订单容器使用非 root 应用用户，当前无法读取挂载目录。补齐私钥后必须把 secrets 目录和文件调整为仅订单应用用户可读，不能改成公开可读。
+- PASS：订单、仓库健康检查仍为 HTTP 200；本地 lint、typecheck、支付/配送员/小程序/部署契约、密钥扫描、数据库并发启动和 Webpack 构建均通过。
+- PASS：GitHub 分支已更新至 `1115428`，`v1.5.0` 标签未移动；商品和媒体数据未修改。
+
 ## 本轮部署与数据保护（2026-08-31）
 
 - PASS：订单 Web 和媒体 Worker 已部署新镜像 `jiawang-commerce-order:mini-wechat-633ad5d`；仓库 Web、仓库 Worker 和网关未重建。
