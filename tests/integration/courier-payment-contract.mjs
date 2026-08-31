@@ -4,7 +4,7 @@ const payment=fs.readFileSync(new URL('../../app/api/orders/[id]/payment-confirm
 const delivery=fs.readFileSync(new URL('../../app/api/courier/orders/[id]/route.ts',import.meta.url),'utf8');
 const couriers=fs.readFileSync(new URL('../../app/api/couriers/route.ts',import.meta.url),'utf8');
 const receive=fs.readFileSync(new URL('../../app/api/orders/[id]/receive/route.ts',import.meta.url),'utf8');
-assert.ok(payment.includes("method==='wechat'&&!process.env.WECHAT_PAY_MERCHANT_ID"));
+assert.ok(payment.includes("method==='wechat')return NextResponse.json({error:'微信支付回调接口尚未启用"));
 assert.ok(payment.includes("method==='alipay'&&!process.env.ALIPAY_APP_ID"));
 assert.ok(payment.includes('commitOrderPoints(db,id)'));
 assert.ok(delivery.includes("action==='deliver'&&!proof"));
