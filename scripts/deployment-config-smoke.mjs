@@ -22,12 +22,24 @@ for (const variable of ["SESSION_SECRET", "OWNER_PASSWORD", "INTEGRATION_SHARED_
   assert.ok(root.includes("${" + variable + ":?set " + variable + "}"), `compose.yaml must require ${variable}`);
 }
 for (const variable of ["WECHAT_MINI_APPID", "WECHAT_MINI_SECRET"]) {
-  assert.ok(root.includes(variable + ": ${" + variable + ":?set " + variable + "}"), `compose.yaml must require ${variable} for mini-program login`);
+  assert.ok(root.includes(variable + ": ${" + variable + ":-}"), `compose.yaml must pass optional ${variable} to the mini-program login route`);
 }
+for (const variable of [
+  "WECHAT_PAY_MERCHANT_ID",
+  "WECHAT_PAY_API_V3_KEY",
+  "WECHAT_PAY_CERT_SERIAL",
+  "WECHAT_PAY_PRIVATE_KEY_FILE",
+  "WECHAT_PAY_PUBLIC_KEY_FILE",
+  "WECHAT_PAY_PUBLIC_KEY_ID",
+  "WECHAT_PAY_NOTIFY_URL",
+]) {
+  assert.ok(root.includes(variable + ": ${" + variable), `compose.yaml must pass ${variable} to the order service`);
+}
+assert.ok(root.includes("- ./secrets:/run/secrets:ro"), "compose.yaml must mount server-only payment materials read-only");
 const preview = fs.readFileSync("compose.preview.yaml", "utf8");
 assert.ok(preview.includes('SESSION_COOKIE_SECURE: "false"'), "HTTP isolated preview must explicitly disable secure session cookies");
 assert.ok(preview.includes("APP_MASTER_KEY: ${APP_MASTER_KEY:?set APP_MASTER_KEY}"));
 assert.ok(!preview.includes("APP_MASTER_SECRET"));
 assert.match(preview, /condition:\s*service_completed_successfully/);
 assert.match(preview, /chown -R 1000:1000 \/data \/media/);
-process.stdout.write("deployment config smoke: required origin, credentials, master key, and mini-program login; origin and CSRF checks stay enabled\n");
+process.stdout.write("deployment config smoke: required origin and credentials; optional WeChat features fail safely while origin and CSRF checks stay enabled\n");
