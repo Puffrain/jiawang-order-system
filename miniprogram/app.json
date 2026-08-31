@@ -13,9 +13,10 @@
     "navigationBarTitleText": "佳旺订单系统",
     "navigationBarBackgroundColor": "#111827",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f3f4f6",
+    "backgroundColor": "#f4f6f8",
     "backgroundTextStyle": "dark"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }
+

@@ -1,5 +1,6 @@
 <view class="page">
-  <view class="hero card"><view class="eyebrow">佳旺美容美发用品店</view><view class="hero-title">今天需要补什么货？</view><view class="muted">在线选品，下单后由商家审核报价</view></view>
+  <image class="brand-banner" src="/assets/brand-banner.jpg" mode="aspectFill"/>
+  <view class="brand-strip"><view class="brand-name">佳旺美容美发用品店</view><view class="brand-caption">在线选品，下单后由商家审核报价</view></view>
   <view class="quick-actions section"><button class="ghost" bindtap="openCart">购物车</button><button class="ghost" bindtap="openOrders">我的订单</button><button class="ghost" bindtap="openAddress">收货地址</button></view>
   <view class="section row"><view class="title section-title">在售商品</view><view class="muted">{{products.length}} 件</view></view>
   <view wx:if="{{loading}}" class="muted center">正在加载商品...</view>

@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page"><view class="brand-strip product-heading"><view class="brand-name">商品详情</view><view class="brand-caption">选择规格和数量后加入购物车</view></view>
   <view wx:if="{{loading}}" class="muted center">正在加载商品...</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
   <block wx:if="{{product}}">
@@ -8,3 +8,4 @@
     <view class="bottom-bar"><button class="ghost" bindtap="openCart">购物车</button><button class="primary" bindtap="addToCart">加入购物车</button></view>
   </block>
 </view>
+

@@ -30,7 +30,7 @@ function request(path, options = {}) {
         }
         reject(new Error((res.data && res.data.error) || '请求失败'));
       },
-      fail: reject
+      fail: (error) => reject(new Error(error?.errMsg || '网络请求失败，请检查小程序合法域名配置'))
     });
   });
 }

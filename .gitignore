@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 production.env*
+server.env
 
 # vercel
 .vercel
@@ -66,3 +67,7 @@ test-results/
 playwright-report/
 /output/playwright/
 /.playwright-cli/
+
+# 受控品牌素材：含真实人物/门店资料，只在本地开发者工具上传副本中使用
+/miniprogram/assets/*
+!/miniprogram/assets/.gitkeep

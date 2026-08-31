@@ -1,13 +1,19 @@
-page { background: #f3f4f6; color: #111827; font-size: 28rpx; }
-button { border-radius: 12rpx; }
+page { background: #f4f6f8; color: #16202a; font-size: 28rpx; }
+button { border-radius: 12rpx; font-weight: 600; }
+button::after { border: 0; }
 .page { min-height: 100vh; padding: 28rpx; box-sizing: border-box; }
 .section { margin-bottom: 24rpx; }
-.title { font-size: 40rpx; font-weight: 700; }
-.muted { color: #6b7280; }
-.card { background: #fff; border-radius: 16rpx; padding: 24rpx; box-sizing: border-box; }
-.primary { background: #f97316 !important; color: #fff !important; }
-.danger { background: #fee2e2 !important; color: #b91c1c !important; }
-.ghost { background: #fff !important; color: #374151 !important; border: 1rpx solid #d1d5db; }
+.title { font-size: 40rpx; font-weight: 700; letter-spacing: 0; }
+.muted { color: #74808c; }
+.card { background: #fff; border: 1rpx solid #e8edf1; border-radius: 16rpx; padding: 24rpx; box-sizing: border-box; box-shadow: 0 8rpx 24rpx rgba(22,32,42,.04); }
+.primary { background: #f47721 !important; color: #fff !important; }
+.danger { background: #fff0ed !important; color: #c43d2e !important; }
+.ghost { background: #fff !important; color: #334155 !important; border: 1rpx solid #dbe2e8; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
 .actions { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 20rpx; }
 .actions button { margin: 0; font-size: 26rpx; }
+.brand-banner { display: block; width: 100%; height: 300rpx; border-radius: 16rpx; object-fit: cover; background: #0b1020; }
+.brand-strip { margin: 22rpx 0 28rpx; padding: 0 4rpx; }
+.brand-name { color: #111827; font-size: 36rpx; font-weight: 700; }
+.brand-caption { margin-top: 8rpx; color: #74808c; font-size: 24rpx; }
+.empty { padding: 90rpx 20rpx; text-align: center; }

@@ -1,9 +1,40 @@
 {
   "description": "佳旺订单系统微信小程序",
-  "setting": { "es6": true, "minified": true, "urlCheck": true, "compileHotReLoad": true },
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "urlCheck": true,
+    "compileHotReLoad": true,
+    "postcss": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
   "compileType": "miniprogram",
   "libVersion": "3.7.0",
   "appid": "",
   "projectname": "jiawang-order-miniapp",
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

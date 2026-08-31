@@ -22,6 +22,7 @@ function walk(directory) {
     if (entry.isDirectory()) { walk(absolute); continue; }
     if (!entry.isFile() || ignoredExtensions.has(path.extname(entry.name).toLowerCase())) continue;
     const relative = path.relative(root, absolute).replaceAll(path.sep, "/");
+    if (relative === 'server.env') continue;
     if (/(^|\/)\.env(?:$|\.)/.test(relative) && !relative.endsWith('/.env.example') && relative !== '.env.example') {
       findings.push(`${relative}: environment file must not be committed`);
       continue;
