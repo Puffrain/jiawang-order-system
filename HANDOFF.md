@@ -1,5 +1,15 @@
 # Handoff
 
+## 2026-09-01 v1.5.1 发布交接
+
+用户已明确批准“现在就上传 GitHub 这个版本，然后部署”。当前发布提交为 `7fdee81c0399bbbbec9872a8bcca622c1a982dd2`（`feat: align mini program buyer experience`），已推送至既有公开仓库 `Puffrain/jiawang-order-system` 的 `release/v1.5.0-mini-courier` 分支；新标签 `v1.5.1` 已远程核验指向该提交，未覆盖 `main` 或既有 `v1.5.0`。发布内容包含小程序五项底栏、文字消息页、图片授权缓存、商品和页面滚动体验、销售优先排序，以及相应契约检查与设计预览。小程序本地 AppID 和开发者工具开关文件仍只保留在工作区，未被提交。
+
+本地发布门禁已通过：`test:miniprogram-contract`、`test:deployment-config`、`typecheck`、`scan:secrets`、`test:db-bootstrap`、`test:courier-payment`、`test:wechat-pay`、`test:wechat-payment-state`、聊天/移动端布局契约、13 个小程序 JavaScript 语法检查、`git diff --check` 与 Webpack 生产构建（69 个页面）。ESLint 的小程序目录不在现有 ESLint 配置覆盖范围内，因此该路径由 JavaScript 语法检查和小程序契约覆盖；Web TypeScript 已由类型检查和生产构建验证。
+
+服务器候选源码包 SHA-256 已在解包前验证，订单候选镜像为 `sha256:6964dcbc0a985017e54f45e876065c23dffc83f99505aceaf9b2c40683c20a33`。正式发布前恢复点为 `/root/jiawang-backups/20260901-160853-v1.5.1-7fdee81`，其数据库、上传、仓库媒体、配置、镜像清单和源码备份哈希均已通过。切换后，订单和仓库两个健康接口正常，五个服务均启动；两套 SQLite `quick_check=ok`。订单侧商品 23、有效商品 22、图片 50、图片缺失 0；仓库侧已发布商品 22、资源 50；媒体和同步队列均为 0。终检脚本输出 `FINALIZE_PASS`，且四个核心服务近 10 分钟日志无阻断性错误。
+
+仍需用户在微信开发者工具重新编译后完成真实界面验收，重点检查微信登录、图片加载、与 Web 后台双向文字消息，以及订单跳转。真实微信支付、退款和语音/富消息仍未验收，也不应对外描述为已上线。首页顶部宣传图移除、小程序语音消息和完整图片/订单/商品富消息是后续功能，未包含本次版本。
+
 ## 2026-09-01 小程序消息页与界面验收候选
 
 用户确认继续本地界面优化，但本轮明确不部署服务器、不提交、也不推送 GitHub。已新增 `miniprogram/pages/messages/`，消息数据直接使用既有 Web 后端 `GET /api/auth/me`、`GET /api/chat/messages`、`POST /api/chat/messages`；发送方生成 `clientMessageId`，后端负责幂等和权限判断。消息页每 10 秒刷新，离开页面会清理定时器，支持文字发送、空态、加载/发送失败提示和订单跳转。复杂图片、语音、商品推荐消息没有伪造成可发送能力，首版保守展示。

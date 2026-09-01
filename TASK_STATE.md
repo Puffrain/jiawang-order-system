@@ -1,5 +1,16 @@
 # 小程序接入任务状态
 
+## 2026-09-01 v1.5.1 GitHub 发布与生产部署
+
+- PASS：现有 GitHub 发布分支 `release/v1.5.0-mini-courier` 已推送提交 `7fdee81c0399bbbbec9872a8bcca622c1a982dd2`，版本标签 `v1.5.1` 已创建并远程核验，未修改 `main` 或既有 `v1.5.0` 标签。
+- PASS：发布提交不包含 `.env`、证书、私钥、数据库、上传文件，也未包含用户本地的 `miniprogram/project.config.json` 与 `miniprogram/project.private.config.json`。`pnpm run scan:secrets` 通过。
+- PASS：本地发布前检查通过：小程序与部署契约、类型检查、数据库并发启动、配送员和支付契约、聊天和移动端布局契约、全部 13 个小程序 JavaScript 语法检查、差异空白检查，以及 Webpack 生产构建（69 个页面）。
+- PASS：服务器候选源码包 SHA-256 核验通过，订单候选镜像为 `sha256:6964dcbc0a985017e54f45e876065c23dffc83f99505aceaf9b2c40683c20a33`。仓库 Web 和 Worker 保持原不可变镜像，未重新构建仓库商品服务。
+- PASS：生产恢复点 `/root/jiawang-backups/20260901-160853-v1.5.1-7fdee81` 已创建并通过 SHA-256 校验，包含两套 SQLite、订单上传、仓库媒体、切换前 Compose、代理配置、镜像清单和源码副本。
+- PASS：正式切换与 `production-finalize.sh` 完成。订单与仓库健康接口均正常；订单库和仓库库 `quick_check=ok`；订单商品 23、有效商品 22、图片 50、缺失 0；仓库已发布商品 22、资源 50；媒体与同步待处理/失败/死信均为 0。
+- PASS：订单 Web 与订单媒体 Worker 已运行候选订单镜像；网关、仓库 Web、仓库 Worker 均运行。四个核心服务的终检日志没有阻断性错误。
+- NOT RUN：真实微信开发者工具端到端登录、文字聊天双向同步和真实支付/退款仍需用户与微信平台的实际环境联调，不能仅凭本次静态与服务器健康检查视为验收完成。
+
 ## 2026-09-01 小程序消息页与移动端细节修复
 
 - PASS：新增小程序买家“消息”页，并接入与 Web 后台同一套真实聊天接口：`GET /api/auth/me`、`GET /api/chat/messages`、`POST /api/chat/messages`。小程序只展示当前 Bearer 会话对应用户的会话数据，服务端继续负责身份、角色和会话对象校验。
