@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   ChevronDown,
   MessageCircle,
   RefreshCw,
+  Search,
   Send,
   Store,
   Trash2,
@@ -65,6 +66,7 @@ export default function ConversationList({
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(
     async (silent = false) => {
@@ -128,6 +130,15 @@ export default function ConversationList({
   const currentCustomer = customers.find(
     (customer) => customer.id === selected,
   );
+  const filteredItems = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    if (!keyword) return items;
+    return items.filter((item) =>
+      `${item.customerName || ""} ${item.shopName || ""} ${item.phone} ${item.lastMessage || ""}`
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [items, query]);
 
   const updateConversation = async (action: "clear" | "hide") => {
     if (!selected) return;
@@ -209,45 +220,63 @@ export default function ConversationList({
       )}
       <div className="grid h-[min(760px,calc(100dvh-220px))] min-h-[520px] overflow-hidden rounded-2xl border lg:grid-cols-[300px_1fr] lg:rounded-3xl">
         <aside
-          className={`${selected ? "hidden lg:block" : "block"} min-h-0 overflow-y-auto border-r bg-slate-50 p-3`}
+          className={`${selected ? "hidden lg:flex" : "flex"} min-h-0 flex-col overflow-hidden border-r bg-slate-50`}
         >
-          {items.map((item) => (
-            <button
-              key={item.buyerUserId}
-              type="button"
-              onClick={() => setSelected(item.buyerUserId)}
-              className={`mb-2 w-full rounded-2xl p-3 text-left ${selected === item.buyerUserId ? "bg-white shadow-sm ring-1 ring-orange-200" : "hover:bg-white"}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex min-w-0 items-center gap-2 text-sm font-bold">
-                  <UserRound size={15} className="shrink-0" />
-                  <span className="truncate">
-                    {item.shopName || item.customerName || item.phone}
+          <label className="relative shrink-0 border-b border-slate-200 bg-white p-3">
+            <Search
+              size={16}
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜索客户、店铺、手机号或消息"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+            />
+          </label>
+          <div
+            data-admin-conversation-scroll
+            className="mobile-scroll min-h-0 flex-1 overflow-y-auto p-3"
+          >
+            {filteredItems.map((item) => (
+              <button
+                key={item.buyerUserId}
+                type="button"
+                onClick={() => setSelected(item.buyerUserId)}
+                className={`mb-2 w-full rounded-2xl p-3 text-left ${selected === item.buyerUserId ? "bg-white shadow-sm ring-1 ring-orange-200" : "hover:bg-white"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-bold">
+                    <UserRound size={15} className="shrink-0" />
+                    <span className="truncate">
+                      {item.shopName || item.customerName || item.phone}
+                    </span>
                   </span>
-                </span>
-                {item.unreadCount > 0 && (
-                  <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
-                    {item.unreadCount}
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 truncate text-xs text-slate-400">
-                {item.customerName} · {item.phone}
+                  {item.unreadCount > 0 && (
+                    <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
+                      {item.unreadCount}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 truncate text-xs text-slate-400">
+                  {item.customerName} · {item.phone}
+                </p>
+                <p className="mt-2 truncate text-xs text-slate-500">
+                  {item.lastMessage || "暂无消息"}
+                </p>
+              </button>
+            ))}
+            {!filteredItems.length && !loading && (
+              <p className="py-12 text-center text-sm text-slate-400">
+                <MessageCircle className="mx-auto mb-2" />
+                {query.trim() ? "没有符合条件的会话" : "暂无客户消息"}
               </p>
-              <p className="mt-2 truncate text-xs text-slate-500">
-                {item.lastMessage || "暂无消息"}
-              </p>
-            </button>
-          ))}
-          {!items.length && !loading && (
-            <p className="py-12 text-center text-sm text-slate-400">
-              <MessageCircle className="mx-auto mb-2" />
-              暂无客户消息
-            </p>
-          )}
+            )}
+          </div>
         </aside>
         <div
-          className={`${selected ? "block" : "hidden lg:block"} min-w-0 bg-white`}
+          data-admin-chat-pane
+          className={`${selected ? "flex" : "hidden lg:flex"} min-h-0 min-w-0 flex-col overflow-hidden bg-white`}
         >
           {selected && ownerId ? (
             <>
@@ -287,14 +316,16 @@ export default function ConversationList({
                   <Trash2 size={15} />
                 </button>
               </div>
-              <ChatPanel
-                key={selected}
-                buyerUserId={selected}
-                currentUserId={ownerId}
-                title="订单沟通"
-                onOpenOrder={onOpenOrder}
-                canRecommendProducts={true}
-              />
+              <div className="min-h-0 flex-1">
+                <ChatPanel
+                  key={selected}
+                  buyerUserId={selected}
+                  currentUserId={ownerId}
+                  title="订单沟通"
+                  onOpenOrder={onOpenOrder}
+                  canRecommendProducts={true}
+                />
+              </div>
             </>
           ) : (
             <div className="grid h-full place-items-center text-sm text-slate-400">

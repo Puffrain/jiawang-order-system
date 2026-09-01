@@ -218,7 +218,10 @@ export default function ChatPanel({
           <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
         </button>
       </header>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#f7f8fb] p-3 sm:p-4">
+      <div
+        data-chat-message-scroll
+        className="mobile-scroll min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#f7f8fb] p-3 sm:p-4"
+      >
         {messages.map((message) => {
           const mine = message.fromUserId === currentUserId;
           const mediaId =

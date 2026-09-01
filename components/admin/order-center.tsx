@@ -1,6 +1,612 @@
 "use client";
-import{useCallback,useEffect,useRef,useState}from"react";import{AlertTriangle,Eye,MessageCircle,Printer,RefreshCw,Trash2,X}from"lucide-react";import{orderStatusLabel}from"@/lib/order-status";
-type Order={id:string;orderNo:string;status:string;totalAmount:number;quoteVersion:number;confirmedQuoteVersion:number;createdAt:string;deletedAt?:string|null;deletedReason?:string|null;buyerName?:string;buyerPhone:string};type Item={id:string;skuId:string;skuCode:string;productName:string;specName:string;quantity:number;listPrice:number;unitPrice:number;lineTotal:number};type Detail={id:string;buyerUserId:string;orderNo:string;status:string;statusLabel:string;subtotal:number;discountAmount:number;discountRate:number;manualReduction:number;shippingFee:number;totalAmount:number;quoteVersion:number;confirmedQuoteVersion:number;customerRemark?:string;buyerName?:string;buyerPhone:string;createdAt:string;deletedAt?:string|null;deletedReason?:string|null;recipientSnapshot:{recipientName:string;phone:string;province:string;city:string;district:string;detail:string};items:Item[]};type Scope="active"|"completed"|"deleted";const money=(v:number)=>`¥${Number(v).toFixed(2)}`;
-export default function OrderCenter({onSummary,onOpenChat,initialOrderId,onInitialOrderHandled}:{onSummary?:(count:number,revenue:number)=>void;onOpenChat?:(buyerUserId:string)=>void;initialOrderId?:string|null;onInitialOrderHandled?:()=>void}){const[orders,setOrders]=useState<Order[]>([]),[scope,setScope]=useState<Scope>("active"),[loading,setLoading]=useState(false),[error,setError]=useState(""),[detail,setDetail]=useState<Detail|null>(null),[detailLoading,setDetailLoading]=useState(false),busy=useRef(false),detailRequest=useRef(0);const load=useCallback(async()=>{if(busy.current)return;busy.current=true;setLoading(true);try{const apiScope=scope==="deleted"?"deleted":scope==="completed"?"completed":"all",response=await fetch(`/api/orders?scope=${apiScope}`,{cache:"no-store"}),body=await response.json().catch(()=>({}));if(!response.ok)throw new Error(body.error||"订单读取失败");let rows:Order[]=body.orders||[];if(scope==="active")rows=rows.filter(order=>order.status!=="closed");setOrders(rows);setError("");if(scope==="active")onSummary?.((body.orders||[]).length,(body.orders||[]).reduce((sum:number,item:Order)=>sum+Number(item.totalAmount),0));}catch(reason){setError(reason instanceof Error?reason.message:"订单读取失败")}finally{busy.current=false;setLoading(false)}},[scope,onSummary]);useEffect(()=>{const first=window.setTimeout(()=>void load(),0),timer=window.setInterval(()=>document.visibilityState==="visible"&&void load(),15000);return()=>{window.clearTimeout(first);window.clearInterval(timer)}},[load]);const open=useCallback(async(id:string)=>{const requestId=++detailRequest.current;setDetail(null);setDetailLoading(true);setError("");try{const response=await fetch(`/api/orders/${id}`,{cache:"no-store"}),body=await response.json().catch(()=>({}));if(requestId!==detailRequest.current)return;if(!response.ok){setError(body.error||"订单详情读取失败");return}setDetail(body.order)}catch{if(requestId===detailRequest.current)setError("订单详情读取失败，请检查网络后重试")}finally{if(requestId===detailRequest.current)setDetailLoading(false)}},[]);useEffect(()=>{if(!initialOrderId)return;void open(initialOrderId);onInitialOrderHandled?.()},[initialOrderId,onInitialOrderHandled,open]);const closeDetail=()=>{detailRequest.current+=1;setDetailLoading(false);setDetail(null)};const changeStatus=async(order:Order,next:string)=>{const response=await fetch(`/api/orders/${order.id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:next})}),body=await response.json().catch(()=>({}));if(!response.ok)return setError(body.error||"状态更新失败");await load()};const remove=async(order:Order)=>{const reason=window.prompt(`归档订单 ${order.orderNo} 的原因`,`老板从在线订单列表归档`);if(reason===null)return;const response=await fetch(`/api/orders/${order.id}`,{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason})}),body=await response.json().catch(()=>({}));if(!response.ok)return setError(body.error||"订单归档失败");await load()};return <div><div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">{scope==="active"?"在线订单":scope==="completed"?"已完成订单":"已归档订单"}</h2><p className="mt-1 text-xs text-slate-400">订单、报价与客户确认实时使用同一份数据</p></div><button onClick={()=>load()} className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"><RefreshCw size={16} className={loading?"animate-spin":""}/>刷新</button></div><div className="mt-4 flex gap-2">{([["active","在线订单"],["completed","已完成"],["deleted","已归档"]]as const).map(([key,label])=><button key={key} onClick={()=>setScope(key)} className={`rounded-xl px-4 py-2 text-sm font-semibold ${scope===key?"bg-orange-500 text-white":"bg-slate-100 text-slate-600"}`}>{label}</button>)}</div>{error&&<p className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700"><AlertTriangle size={15}/>{error}</p>}<div className="mt-4 overflow-x-auto"><table className="admin-responsive-table w-full text-left text-sm"><thead className="border-b text-slate-400"><tr><th className="p-3">订单/客户</th><th>状态</th><th>金额</th><th>时间</th><th>操作</th></tr></thead><tbody>{orders.map(order=><tr key={order.id} className="border-b"><td data-label="订单 / 客户" className="p-3"><b>{order.orderNo}</b><p className="mt-1 text-xs text-slate-400">{order.buyerName||order.buyerPhone} · {order.buyerPhone}</p></td><td data-label="状态"><span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-700">{order.deletedAt?"已归档":orderStatusLabel(order.status,{quoteVersion:order.quoteVersion,confirmedQuoteVersion:order.confirmedQuoteVersion})}</span></td><td data-label="金额" className="font-bold">{money(order.totalAmount)}</td><td data-label="时间" className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleString("zh-CN")}</td><td data-label="操作"><div className="flex flex-wrap gap-2"><button onClick={()=>open(order.id)} className="rounded-lg bg-slate-100 p-2" title="查看订单"><Eye size={15}/></button><a href={`/orders/${order.id}/print?type=detail`} className="rounded-lg bg-slate-100 p-2" title="打印"><Printer size={15}/></a>{scope==="active"&&<>{order.status==="pending_review"&&<button onClick={()=>changeStatus(order,"pending_payment")} className="action-blue">进入待付款</button>}{order.status==="pending_payment"&&<button onClick={()=>changeStatus(order,"pending_shipment")} className="action-blue">确认收款</button>}{order.status==="pending_shipment"&&<button onClick={()=>changeStatus(order,"shipped")} className="action-green">确认发货</button>}{order.status==="shipped"&&<button onClick={()=>changeStatus(order,"closed")} className="action-green">完成订单</button>}</>}{scope==="completed"&&<button onClick={()=>remove(order)} className="rounded-lg bg-red-50 p-2 text-red-600" title="归档已完成订单"><Trash2 size={15}/></button>}</div></td></tr>)}</tbody></table>{!orders.length&&!loading&&<p className="py-12 text-center text-slate-400">暂无订单</p>}</div>{(detail||detailLoading)&&<OrderDrawer detail={detail} loading={detailLoading} close={closeDetail} reload={async()=>{await load();if(detail)await open(detail.id)}} onChat={buyerId=>{setDetail(null);onOpenChat?.(buyerId)}}/>}</div>}
-function OrderDrawer({detail,loading,close,reload,onChat}:{detail:Detail|null;loading:boolean;close:()=>void;reload:()=>Promise<void>;onChat:(id:string)=>void}){return <div className="fixed inset-0 z-[130] bg-slate-950/45" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title"><aside className="mobile-scroll ml-auto h-full w-full max-w-2xl overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)]"><header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-5"><div><h2 id="order-drawer-title" className="font-bold">订单在线查看与改价</h2><p className="text-xs text-slate-400">逐项成交价、优惠、减免和运费</p></div><button type="button" onClick={close} className="rounded-lg bg-slate-100 p-2" aria-label="关闭订单详情"><X size={18}/></button></header>{loading||!detail?<p className="p-8 text-slate-400">正在读取…</p>:<div className="space-y-4 p-5"><section className="rounded-2xl bg-slate-950 p-5 text-white"><div className="flex justify-between"><b>{detail.orderNo}</b><span>{detail.statusLabel}</span></div><p className="mt-3 text-2xl font-bold">{money(detail.totalAmount)}</p></section><section className="rounded-2xl border p-4"><h3 className="font-bold">客户与收货信息</h3><p className="mt-3 text-sm">{detail.buyerName} · {detail.buyerPhone}</p><p className="mt-2 text-sm text-slate-500">{detail.recipientSnapshot.recipientName}　{detail.recipientSnapshot.phone}</p><p className="text-sm text-slate-500">{detail.recipientSnapshot.province}{detail.recipientSnapshot.city}{detail.recipientSnapshot.district}{detail.recipientSnapshot.detail}</p><button onClick={()=>onChat(detail.buyerUserId)} className="mt-3 flex items-center gap-1 text-sm font-semibold text-orange-600"><MessageCircle size={15}/>联系客户</button></section><QuoteEditor detail={detail} reload={reload}/></div>}</aside></div>}
-function QuoteEditor({detail,reload}:{detail:Detail;reload:()=>Promise<void>}){const editable=["pending_review","pending_payment"].includes(detail.status),[prices,setPrices]=useState<Record<string,string>>(Object.fromEntries(detail.items.map(item=>[item.id,String(item.unitPrice)]))),[discountRate,setDiscountRate]=useState(String(detail.discountRate||1)),[manualReduction,setManualReduction]=useState(String(detail.manualReduction||0)),[shippingFee,setShippingFee]=useState(String(detail.shippingFee||0)),[reason,setReason]=useState(""),[message,setMessage]=useState(""),[saving,setSaving]=useState(false);const save=async()=>{setSaving(true);setMessage("");const response=await fetch(`/api/orders/${detail.id}/quote`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:detail.items.map(item=>({orderItemId:item.id,unitPrice:Number(prices[item.id])})),discountRate:Number(discountRate),manualReduction:Number(manualReduction),shippingFee:Number(shippingFee),reason})}),json=await response.json().catch(()=>({}));setSaving(false);if(!response.ok)return setMessage(json.error||"报价保存失败");setMessage(`第 ${json.quote.version} 版报价已发送给客户确认`);await reload()};return <section className="rounded-2xl border p-4"><h3 className="font-bold">商品成交价</h3>{!editable&&<p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm text-slate-600">该订单当前状态不可改价，历史报价仍可查看。</p>}<fieldset disabled={!editable}><div className="mt-3 space-y-3">{detail.items.map(item=><label key={item.id} className="grid grid-cols-1 items-center gap-3 min-[420px]:grid-cols-[1fr_120px] rounded-xl bg-slate-50 p-3"><span className="text-sm"><b>{item.productName}</b><small className="mt-1 block text-slate-400">{item.specName} × {item.quantity}，原单价 {money(item.listPrice)}</small></span><input type="number" min="0" step="0.01" value={prices[item.id]} onChange={e=>setPrices({...prices,[item.id]:e.target.value})} className="rounded-lg border px-3 py-2 text-right"/></label>)}</div><div className="mt-4 grid gap-3 sm:grid-cols-3"><label className="text-xs text-slate-500">折扣比例<input type="number" min="0" max="1" step="0.01" value={discountRate} onChange={e=>setDiscountRate(e.target.value)} className="input mt-1"/></label><label className="text-xs text-slate-500">额外减免<input type="number" min="0" step="0.01" value={manualReduction} onChange={e=>setManualReduction(e.target.value)} className="input mt-1"/></label><label className="text-xs text-slate-500">运费<input type="number" min="0" step="0.01" value={shippingFee} onChange={e=>setShippingFee(e.target.value)} className="input mt-1"/></label></div><textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="改价原因（建议填写）" className="input mt-3"/>{message&&<p className="mt-3 text-sm text-orange-600">{message}</p>}<button disabled={saving||!editable} onClick={save} className="mt-4 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white disabled:opacity-50">{saving?"保存中…":"保存并发送新报价"}</button></fieldset></section>}
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  Eye,
+  MessageCircle,
+  Printer,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import { orderStatusLabel } from "@/lib/order-status";
+type Order = {
+  id: string;
+  orderNo: string;
+  status: string;
+  totalAmount: number;
+  quoteVersion: number;
+  confirmedQuoteVersion: number;
+  createdAt: string;
+  deletedAt?: string | null;
+  deletedReason?: string | null;
+  buyerName?: string;
+  buyerPhone: string;
+};
+type Item = {
+  id: string;
+  skuId: string;
+  skuCode: string;
+  productName: string;
+  specName: string;
+  quantity: number;
+  listPrice: number;
+  unitPrice: number;
+  lineTotal: number;
+};
+type Detail = {
+  id: string;
+  buyerUserId: string;
+  orderNo: string;
+  status: string;
+  statusLabel: string;
+  subtotal: number;
+  discountAmount: number;
+  discountRate: number;
+  manualReduction: number;
+  shippingFee: number;
+  totalAmount: number;
+  quoteVersion: number;
+  confirmedQuoteVersion: number;
+  customerRemark?: string;
+  buyerName?: string;
+  buyerPhone: string;
+  createdAt: string;
+  deletedAt?: string | null;
+  deletedReason?: string | null;
+  recipientSnapshot: {
+    recipientName: string;
+    phone: string;
+    province: string;
+    city: string;
+    district: string;
+    detail: string;
+  };
+  items: Item[];
+};
+type Scope = "active" | "completed" | "deleted";
+const money = (v: number) => `¥${Number(v).toFixed(2)}`;
+export default function OrderCenter({
+  onSummary,
+  onOpenChat,
+  initialOrderId,
+  onInitialOrderHandled,
+}: {
+  onSummary?: (count: number, revenue: number) => void;
+  onOpenChat?: (buyerUserId: string) => void;
+  initialOrderId?: string | null;
+  onInitialOrderHandled?: () => void;
+}) {
+  const [orders, setOrders] = useState<Order[]>([]),
+    [scope, setScope] = useState<Scope>("active"),
+    [query, setQuery] = useState(""),
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState(""),
+    [detail, setDetail] = useState<Detail | null>(null),
+    [detailLoading, setDetailLoading] = useState(false),
+    busy = useRef(false),
+    detailRequest = useRef(0);
+  const filteredOrders = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    if (!keyword) return orders;
+    return orders.filter((order) =>
+      `${order.orderNo} ${order.buyerName || ""} ${order.buyerPhone}`
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [orders, query]);
+  const load = useCallback(async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setLoading(true);
+    try {
+      const apiScope =
+          scope === "deleted"
+            ? "deleted"
+            : scope === "completed"
+              ? "completed"
+              : "all",
+        response = await fetch(`/api/orders?scope=${apiScope}`, {
+          cache: "no-store",
+        }),
+        body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "订单读取失败");
+      let rows: Order[] = body.orders || [];
+      if (scope === "active")
+        rows = rows.filter((order) => order.status !== "closed");
+      setOrders(rows);
+      setError("");
+      if (scope === "active")
+        onSummary?.(
+          (body.orders || []).length,
+          (body.orders || []).reduce(
+            (sum: number, item: Order) => sum + Number(item.totalAmount),
+            0,
+          ),
+        );
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "订单读取失败");
+    } finally {
+      busy.current = false;
+      setLoading(false);
+    }
+  }, [scope, onSummary]);
+  useEffect(() => {
+    const first = window.setTimeout(() => void load(), 0),
+      timer = window.setInterval(
+        () => document.visibilityState === "visible" && void load(),
+        15000,
+      );
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
+  }, [load]);
+  const open = useCallback(async (id: string) => {
+    const requestId = ++detailRequest.current;
+    setDetail(null);
+    setDetailLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/orders/${id}`, { cache: "no-store" }),
+        body = await response.json().catch(() => ({}));
+      if (requestId !== detailRequest.current) return;
+      if (!response.ok) {
+        setError(body.error || "订单详情读取失败");
+        return;
+      }
+      setDetail(body.order);
+    } catch {
+      if (requestId === detailRequest.current)
+        setError("订单详情读取失败，请检查网络后重试");
+    } finally {
+      if (requestId === detailRequest.current) setDetailLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (!initialOrderId) return;
+    void open(initialOrderId);
+    onInitialOrderHandled?.();
+  }, [initialOrderId, onInitialOrderHandled, open]);
+  const closeDetail = () => {
+    detailRequest.current += 1;
+    setDetailLoading(false);
+    setDetail(null);
+  };
+  const changeStatus = async (order: Order, next: string) => {
+    const response = await fetch(`/api/orders/${order.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      }),
+      body = await response.json().catch(() => ({}));
+    if (!response.ok) return setError(body.error || "状态更新失败");
+    await load();
+  };
+  const remove = async (order: Order) => {
+    const reason = window.prompt(
+      `归档订单 ${order.orderNo} 的原因`,
+      `老板从在线订单列表归档`,
+    );
+    if (reason === null) return;
+    const response = await fetch(`/api/orders/${order.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      }),
+      body = await response.json().catch(() => ({}));
+    if (!response.ok) return setError(body.error || "订单归档失败");
+    await load();
+  };
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold">
+            {scope === "active"
+              ? "在线订单"
+              : scope === "completed"
+                ? "已完成订单"
+                : "已归档订单"}
+          </h2>
+          <p className="mt-1 text-xs text-slate-400">
+            订单、报价与客户确认实时使用同一份数据
+          </p>
+        </div>
+        <button
+          onClick={() => load()}
+          className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          刷新
+        </button>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {(
+          [
+            ["active", "在线订单"],
+            ["completed", "已完成"],
+            ["deleted", "已归档"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setScope(key)}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold ${scope === key ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-600"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <label className="relative mt-4 block">
+        <Search
+          size={17}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="搜索订单号、客户名或手机号"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+        />
+      </label>
+      {error && (
+        <p className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          <AlertTriangle size={15} />
+          {error}
+        </p>
+      )}
+      <div
+        data-admin-order-scroll
+        className="mobile-scroll mt-4 max-h-[min(680px,calc(100dvh-18rem))] min-h-48 overflow-y-auto overflow-x-auto rounded-xl border border-slate-200"
+      >
+        <table className="admin-responsive-table w-full text-left text-sm">
+          <thead className="sticky top-0 z-10 border-b bg-white text-slate-400 shadow-sm">
+            <tr>
+              <th className="p-3">订单/客户</th>
+              <th>状态</th>
+              <th>金额</th>
+              <th>时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredOrders.map((order) => (
+              <tr key={order.id} className="border-b last:border-0">
+                <td data-label="订单 / 客户" className="p-3">
+                  <b>{order.orderNo}</b>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {order.buyerName || order.buyerPhone} · {order.buyerPhone}
+                  </p>
+                </td>
+                <td data-label="状态">
+                  <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-700">
+                    {order.deletedAt
+                      ? "已归档"
+                      : orderStatusLabel(order.status, {
+                          quoteVersion: order.quoteVersion,
+                          confirmedQuoteVersion: order.confirmedQuoteVersion,
+                        })}
+                  </span>
+                </td>
+                <td data-label="金额" className="font-bold">
+                  {money(order.totalAmount)}
+                </td>
+                <td data-label="时间" className="text-xs text-slate-500">
+                  {new Date(order.createdAt).toLocaleString("zh-CN")}
+                </td>
+                <td data-label="操作">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => open(order.id)}
+                      className="rounded-lg bg-slate-100 p-2"
+                      title="查看订单"
+                    >
+                      <Eye size={15} />
+                    </button>
+                    <a
+                      href={`/orders/${order.id}/print?type=detail`}
+                      className="rounded-lg bg-slate-100 p-2"
+                      title="打印"
+                    >
+                      <Printer size={15} />
+                    </a>
+                    {scope === "active" && (
+                      <>
+                        {order.status === "pending_review" && (
+                          <button
+                            onClick={() =>
+                              changeStatus(order, "pending_payment")
+                            }
+                            className="action-blue"
+                          >
+                            进入待付款
+                          </button>
+                        )}
+                        {order.status === "pending_payment" && (
+                          <button
+                            onClick={() =>
+                              changeStatus(order, "pending_shipment")
+                            }
+                            className="action-blue"
+                          >
+                            确认收款
+                          </button>
+                        )}
+                        {order.status === "pending_shipment" && (
+                          <button
+                            onClick={() => changeStatus(order, "shipped")}
+                            className="action-green"
+                          >
+                            确认发货
+                          </button>
+                        )}
+                        {order.status === "shipped" && (
+                          <button
+                            onClick={() => changeStatus(order, "closed")}
+                            className="action-green"
+                          >
+                            完成订单
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {scope === "completed" && (
+                      <button
+                        onClick={() => remove(order)}
+                        className="rounded-lg bg-red-50 p-2 text-red-600"
+                        title="归档已完成订单"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!filteredOrders.length && !loading && (
+          <p className="py-12 text-center text-slate-400">
+            {query.trim() ? "没有符合条件的订单" : "暂无订单"}
+          </p>
+        )}
+      </div>
+      {(detail || detailLoading) && (
+        <OrderDrawer
+          detail={detail}
+          loading={detailLoading}
+          close={closeDetail}
+          reload={async () => {
+            await load();
+            if (detail) await open(detail.id);
+          }}
+          onChat={(buyerId) => {
+            setDetail(null);
+            onOpenChat?.(buyerId);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+function OrderDrawer({
+  detail,
+  loading,
+  close,
+  reload,
+  onChat,
+}: {
+  detail: Detail | null;
+  loading: boolean;
+  close: () => void;
+  reload: () => Promise<void>;
+  onChat: (id: string) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[130] bg-slate-950/45"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-drawer-title"
+    >
+      <aside className="mobile-scroll ml-auto h-full w-full max-w-2xl overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)]">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-5">
+          <div>
+            <h2 id="order-drawer-title" className="font-bold">
+              订单在线查看与改价
+            </h2>
+            <p className="text-xs text-slate-400">
+              逐项成交价、优惠、减免和运费
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-lg bg-slate-100 p-2"
+            aria-label="关闭订单详情"
+          >
+            <X size={18} />
+          </button>
+        </header>
+        {loading || !detail ? (
+          <p className="p-8 text-slate-400">正在读取…</p>
+        ) : (
+          <div className="space-y-4 p-5">
+            <section className="rounded-2xl bg-slate-950 p-5 text-white">
+              <div className="flex justify-between">
+                <b>{detail.orderNo}</b>
+                <span>{detail.statusLabel}</span>
+              </div>
+              <p className="mt-3 text-2xl font-bold">
+                {money(detail.totalAmount)}
+              </p>
+            </section>
+            <section className="rounded-2xl border p-4">
+              <h3 className="font-bold">客户与收货信息</h3>
+              <p className="mt-3 text-sm">
+                {detail.buyerName} · {detail.buyerPhone}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                {detail.recipientSnapshot.recipientName}　
+                {detail.recipientSnapshot.phone}
+              </p>
+              <p className="text-sm text-slate-500">
+                {detail.recipientSnapshot.province}
+                {detail.recipientSnapshot.city}
+                {detail.recipientSnapshot.district}
+                {detail.recipientSnapshot.detail}
+              </p>
+              <button
+                onClick={() => onChat(detail.buyerUserId)}
+                className="mt-3 flex items-center gap-1 text-sm font-semibold text-orange-600"
+              >
+                <MessageCircle size={15} />
+                联系客户
+              </button>
+            </section>
+            <QuoteEditor detail={detail} reload={reload} />
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+}
+function QuoteEditor({
+  detail,
+  reload,
+}: {
+  detail: Detail;
+  reload: () => Promise<void>;
+}) {
+  const editable = ["pending_review", "pending_payment"].includes(
+      detail.status,
+    ),
+    [prices, setPrices] = useState<Record<string, string>>(
+      Object.fromEntries(
+        detail.items.map((item) => [item.id, String(item.unitPrice)]),
+      ),
+    ),
+    [discountRate, setDiscountRate] = useState(
+      String(detail.discountRate || 1),
+    ),
+    [manualReduction, setManualReduction] = useState(
+      String(detail.manualReduction || 0),
+    ),
+    [shippingFee, setShippingFee] = useState(String(detail.shippingFee || 0)),
+    [reason, setReason] = useState(""),
+    [message, setMessage] = useState(""),
+    [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    setMessage("");
+    const response = await fetch(`/api/orders/${detail.id}/quote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: detail.items.map((item) => ({
+            orderItemId: item.id,
+            unitPrice: Number(prices[item.id]),
+          })),
+          discountRate: Number(discountRate),
+          manualReduction: Number(manualReduction),
+          shippingFee: Number(shippingFee),
+          reason,
+        }),
+      }),
+      json = await response.json().catch(() => ({}));
+    setSaving(false);
+    if (!response.ok) return setMessage(json.error || "报价保存失败");
+    setMessage(`第 ${json.quote.version} 版报价已发送给客户确认`);
+    await reload();
+  };
+  return (
+    <section className="rounded-2xl border p-4">
+      <h3 className="font-bold">商品成交价</h3>
+      {!editable && (
+        <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm text-slate-600">
+          该订单当前状态不可改价，历史报价仍可查看。
+        </p>
+      )}
+      <fieldset disabled={!editable}>
+        <div className="mt-3 space-y-3">
+          {detail.items.map((item) => (
+            <label
+              key={item.id}
+              className="grid grid-cols-1 items-center gap-3 min-[420px]:grid-cols-[1fr_120px] rounded-xl bg-slate-50 p-3"
+            >
+              <span className="text-sm">
+                <b>{item.productName}</b>
+                <small className="mt-1 block text-slate-400">
+                  {item.specName} × {item.quantity}，原单价{" "}
+                  {money(item.listPrice)}
+                </small>
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={prices[item.id]}
+                onChange={(e) =>
+                  setPrices({ ...prices, [item.id]: e.target.value })
+                }
+                className="rounded-lg border px-3 py-2 text-right"
+              />
+            </label>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <label className="text-xs text-slate-500">
+            折扣比例
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.01"
+              value={discountRate}
+              onChange={(e) => setDiscountRate(e.target.value)}
+              className="input mt-1"
+            />
+          </label>
+          <label className="text-xs text-slate-500">
+            额外减免
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={manualReduction}
+              onChange={(e) => setManualReduction(e.target.value)}
+              className="input mt-1"
+            />
+          </label>
+          <label className="text-xs text-slate-500">
+            运费
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={shippingFee}
+              onChange={(e) => setShippingFee(e.target.value)}
+              className="input mt-1"
+            />
+          </label>
+        </div>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="改价原因（建议填写）"
+          className="input mt-3"
+        />
+        {message && <p className="mt-3 text-sm text-orange-600">{message}</p>}
+        <button
+          disabled={saving || !editable}
+          onClick={save}
+          className="mt-4 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white disabled:opacity-50"
+        >
+          {saving ? "保存中…" : "保存并发送新报价"}
+        </button>
+      </fieldset>
+    </section>
+  );
+}
