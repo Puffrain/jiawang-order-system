@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { NoticeContent } from "@/components/admin/notice-editor";
 
 type Sku = { id: string; skuCode: string; specName: string; basePrice: number; stock: number; tiers: { minQty: number; maxQty: number | null; unitPrice: number }[] };
-type Product = { id: string; name: string; category: string; categoryKey?: string; subcategoryKey?: string | null; brand?: string; description?: string; primaryImage: { url: string } | null; skus: Sku[] };
+type Product = { id: string; name: string; category: string; categoryKey?: string; subcategoryKey?: string | null; brand?: string; description?: string; primaryImage: { url: string } | null; salesCount: number; skus: Sku[] };
 type CustomerNotice = { id: string; title: string; document: { blocks: Array<{ type: "heading" | "paragraph" | "list" | "image"; text?: string; items?: string[]; align?: "left" | "center" | "right"; marks?: { bold?: boolean; italic?: boolean; underline?: boolean; fontSize?: number; color?: string; link?: string }; src?: string; alt?: string }> } };
 
 const money = (value: number) => "¥" + Number(value).toFixed(2).replace(/[.]00$/, "");
@@ -27,7 +27,7 @@ export default function CatalogHome({ products, notices, onAdded }: { products: 
     const value = query.trim().toLowerCase();
     const list = products.filter((product) => (!value || (product.name + " " + (product.brand || "") + " " + product.skus.map((sku) => sku.skuCode).join(" ")).toLowerCase().includes(value)) && (primary === "all" || (product.categoryKey || product.category) === primary) && (secondary === "all" || (product.subcategoryKey || product.category) === secondary));
     if (sort === "price") return [...list].sort((a, b) => lowest(a) - lowest(b));
-    if (sort === "sales") return [...list].sort((a, b) => stock(b) - stock(a));
+    if (sort === "sales") return [...list].sort((a, b) => b.salesCount - a.salesCount || a.name.localeCompare(b.name, "zh-CN") || a.id.localeCompare(b.id));
     return list;
   }, [products, query, primary, secondary, sort]);
   const add = async (product: Product) => {
@@ -58,14 +58,14 @@ export default function CatalogHome({ products, notices, onAdded }: { products: 
     {notices[0] && <details className="mx-3 mb-2 rounded-xl bg-orange-50 px-3 py-2 text-sm lg:mx-0 lg:mb-5"><summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-orange-700"><Bell size={15} />{notices[0].title}<ChevronDown size={14} className="ml-auto" /></summary><div className="mt-2 border-t border-orange-100 pt-2"><NoticeContent notice={notices[0]} /></div></details>}
     <div className="sticky top-[154px] z-10 grid grid-cols-3 border-y bg-white text-sm lg:static lg:mx-auto lg:max-w-3xl lg:rounded-lg lg:border">
       <button onClick={() => setSort("recommend")} className={"py-3 " + (sort === "recommend" ? "font-bold text-orange-600" : "text-slate-500")}>为您推荐</button>
-      <button onClick={() => setSort("sales")} className={"py-3 " + (sort === "sales" ? "font-bold text-orange-600" : "text-slate-500")}>库存优先</button>
+      <button onClick={() => setSort("sales")} className={"py-3 " + (sort === "sales" ? "font-bold text-orange-600" : "text-slate-500")}>销量优先</button>
       <button onClick={() => setSort("price")} className={"py-3 " + (sort === "price" ? "font-bold text-orange-600" : "text-slate-500")}>价格 ↑</button>
     </div>
-    <div className="grid min-h-[520px] grid-cols-[92px_1fr] lg:mt-6 lg:grid-cols-[184px_minmax(0,1fr)] lg:gap-6">
-      <aside data-buyer-catalog-sidebar className="bg-slate-50 lg:rounded-lg lg:border lg:bg-white lg:py-2">
+    <div className="grid h-[calc(100dvh-15.75rem)] min-h-[320px] grid-cols-[92px_1fr] lg:mt-6 lg:h-[calc(100vh-17rem)] lg:grid-cols-[184px_minmax(0,1fr)] lg:gap-6">
+      <aside data-buyer-catalog-sidebar className="overflow-y-auto bg-slate-50 lg:rounded-lg lg:border lg:bg-white lg:py-2">
         {secondaryItems.map((item) => <button key={item} onClick={() => setSecondary(item)} className={"relative block min-h-14 w-full px-2 py-4 text-sm lg:text-left " + (secondary === item ? "bg-white font-bold text-slate-900 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r before:bg-orange-500 lg:bg-orange-50" : "text-slate-600")}>{item === "all" ? "全部" : item}</button>)}
       </aside>
-      <section data-buyer-product-list className="min-w-0 bg-white lg:grid lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
+      <section data-buyer-product-list className="min-w-0 overflow-y-auto bg-white lg:grid lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
         {filtered.map((product) => <ProductRow key={product.id} product={product} adding={adding === product.id} add={() => void add(product)} />)}
         {!filtered.length && <div className="grid h-64 place-items-center px-5 text-sm text-slate-400 lg:col-span-full">没有符合条件的商品</div>}
       </section>

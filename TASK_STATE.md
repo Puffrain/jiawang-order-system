@@ -1,5 +1,34 @@
 # 小程序接入任务状态
 
+## 2026-09-01 小程序消息页与移动端细节修复
+
+- PASS：新增小程序买家“消息”页，并接入与 Web 后台同一套真实聊天接口：`GET /api/auth/me`、`GET /api/chat/messages`、`POST /api/chat/messages`。小程序只展示当前 Bearer 会话对应用户的会话数据，服务端继续负责身份、角色和会话对象校验。
+- PASS：消息页支持历史加载、文字发送、消息自动定位、10 秒刷新、进入订单、加载/空态/发送失败提示；隐藏或卸载页面会清理刷新定时器。首版明确只支持文字输入，复杂消息以保守展示处理，不伪造图片或语音上传能力。
+- PASS：首页、购物车、订单和地址页均增加消息入口；底部导航统一为“首页 / 购物车 / 消息 / 订单 / 我的”。
+- PASS：首页商品标题加入溢出控制，加购按钮稳定为 `52rpx x 52rpx` 圆形；订单和地址页内容改在 `scroll-view` 内滚动，空数据与长数据时底栏保持固定。
+- PASS：小程序契约、全部相关 JavaScript 语法检查、密钥扫描、Web 聊天订单跳转契约、Web 响应式契约和空白检查均通过。
+- NOT RUN：尚未在微信开发者工具完成真实端到端聊天验收，需用户重新编译小程序后验证小程序消息与 Web 后台双向同步。
+- BOUNDARY：本轮未部署服务器、未提交、未推送 GitHub。`miniprogram/project.config.json`、`miniprogram/project.private.config.json`、`.env`、证书、私钥、数据库、日志及上传文件均不改动、不提交。
+
+## 2026-09-01 小程序登录配置与字号修复
+
+- PASS：定位微信登录报"小程序服务尚未配置"的根因是服务器 `/opt/jiawang-commerce-new/.env` 缺少 `WECHAT_MINI_APPID` 与 `WECHAT_MINI_SECRET`，本地受控 `server.env` 中两项均已填写。
+- PASS：服务器已在更新前备份 `.env` 为 `.env.before-mini-login-20260901-110933`，仅同步两项微信登录配置，重建 `order-web` 服务；五个生产服务均为 running，商品、订单、图片和数据库卷未修改。
+- PASS：服务器临时受控配置副本与临时脚本均已删除；容器环境仅以脱敏形式确认两项变量存在。
+- PASS：原生小程序全局按钮明确使用 `28rpx`，登录页"微信登录"、"配送员入口"和错误提示使用紧凑字号及间距，避免微信默认按钮字号导致的粗大显示。
+- PASS：`test:miniprogram-contract`、登录与配送员登录 JS 语法检查、`git diff --check` 通过。
+- NOT RUN：真实微信登录需开发者工具重新编译后由 `wx.login` 产生有效一次性 code；未使用伪造 code 或真实用户身份绕过此流程。外部无效请求已不再获得 `503` 未配置错误，但网关在无会话请求时可先返回 `401`，不作为真实登录验收。
+- NOT RUN：本轮仅完成服务器配置同步，样式源码尚未提交或推送。`miniprogram/project.config.json` 与 `miniprogram/project.private.config.json` 是用户已有开发者工具改动，必须继续排除在提交之外。
+
+## 2026-09-01 网页买家端滚动与销量排序候选版本
+
+- PASS：买家商品区和左侧分类栏均改为各自纵向滚动；商品列表不会再因商品数量增加无限撑高页面。
+- PASS："库存优先" 已改为 "销量优先"。销量按已收款、未退款、未删除订单的订单明细数量累计，未再使用库存数排序。
+- PASS："联系商户" 页的聊天内容区改为受视口高度约束，消息和关联订单在内部滚动，输入区保留在底部。
+- PASS：`test:buyer-responsive-layout`、`test:chat-order-navigation`、`typecheck`、修改文件 ESLint、`scan:secrets`、`git diff --check` 和 `next build --webpack` 均通过。
+- BLOCKED：`test:product-flow` 需要隔离测试老板账号环境变量 `TEST_OWNER_PHONE` 与 `TEST_OWNER_PASSWORD`；当前未使用或索取真实账号，故未执行完整登录后的商品流测试。
+- NOT RUN：本轮未修改或检查 `miniprogram/` 页面，未部署服务器，未提交或推送 GitHub；`miniprogram/project.config.json` 与 `miniprogram/project.private.config.json` 是用户已有未提交改动，必须保留且不纳入本轮提交。
+
 ## 2026-09-01 支付退款并发保护收尾
 
 - PASS：全额退款增加 `UNIQUE(order_id)` 约束和迁移 `003_wechat_refund_single_order.sql`；历史重复退款不会被自动删除，迁移会明确停止并报告订单号。
@@ -47,6 +76,13 @@
 - PASS：商品详情继续保留规格、库存、数量和固定加入购物车操作；结算从购物车进入地址选择，不改变服务端权限。
 - PASS：品牌宣传图继续作为本地忽略资源使用，路径为 `miniprogram/assets/brand-banner.jpg`，未进入 GitHub。
 - PASS：本轮全部小程序 JavaScript 通过 `node --check`，`pnpm run test:miniprogram-contract` 通过，`git diff --check` 无空格错误。
+
+## 2026-09-01 微信小程序登录 403 修复
+
+- 根因：服务器源码已包含 `/api/auth/wechat/login` 的小程序跨站豁免，但运行中的 `order-web` 旧镜像不包含该逻辑。
+- 已在 `/opt/jiawang-commerce-new` 仅重建并重启 `order-web`，未触碰仓库服务、数据库卷、商品、图片或媒体。
+- 容器内已确认 `isWechatLogin` 逻辑存在。公网带 `Sec-Fetch-Site: cross-site` 的无效 code 请求由原先 `403 请求来源无效` 变为应用层 `400`，证明请求已通过来源校验；公网健康检查仍为 200。
+- 待用户验收：微信开发者工具重新编译后点击“微信登录”，使用真实 code 完成登录。无效 code 的 400 不是失败回归，而是预期的应用层校验结果。
 
 ## 目标
 

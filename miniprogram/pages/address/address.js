@@ -13,5 +13,5 @@ Page({
   addAddress() {
     wx.chooseAddress({ success: address => request('/api/addresses', { method: 'POST', data: { recipientName: address.userName, phone: address.telNumber, province: address.provinceName, city: address.cityName, district: address.countyName, detail: address.detailInfo, isDefault: true } }).then(() => this.load()).catch(error => wx.showToast({ title: error.message, icon: 'none' })), fail: () => wx.showToast({ title: '未能读取微信地址', icon: 'none' }) });
   },
-  openHome() { wx.reLaunch({ url: '/pages/home/home' }); }, openCart() { wx.reLaunch({ url: '/pages/cart/cart' }); }, openOrders() { wx.reLaunch({ url: '/pages/orders/orders' }); }
+  openHome() { wx.reLaunch({ url: '/pages/home/home' }); }, openCart() { wx.reLaunch({ url: '/pages/cart/cart' }); }, openMessages() { wx.reLaunch({ url: '/pages/messages/messages' }); }, openOrders() { wx.reLaunch({ url: '/pages/orders/orders' }); }
 });

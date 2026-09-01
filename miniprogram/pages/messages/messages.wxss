@@ -1,0 +1,21 @@
+.messages-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.brand-strip { flex: 0 0 auto; }
+.message-scroll { flex: 1; min-height: 0; padding: 8rpx 0 20rpx; }
+.message-row { display: flex; margin: 18rpx 0; }
+.message-row.mine { justify-content: flex-end; }
+.message-bubble { max-width: 76%; padding: 18rpx 20rpx; border: 1rpx solid #e4e9ed; border-radius: 14rpx; background: #fff; color: #26323c; }
+.message-row.mine .message-bubble { border-color: #f47721; background: #fff4eb; }
+.message-row.system { justify-content: center; }
+.message-row.system .message-bubble { max-width: 88%; border-color: #f5d7ac; background: #fff8e8; color: #8a5214; text-align: center; }
+.message-content { font-size: 27rpx; line-height: 1.55; word-break: break-all; }
+.message-order { margin-top: 10rpx; color: #c75a17; font-size: 22rpx; }
+.message-time { margin-top: 8rpx; color: #84909a; font-size: 21rpx; text-align: right; }
+.message-row.system .message-time { text-align: center; }
+.empty-message { padding: 120rpx 44rpx; text-align: center; line-height: 1.7; }
+.center { padding: 80rpx 0; text-align: center; }
+.composer { flex: 0 0 auto; display: flex; align-items: center; gap: 14rpx; margin: 0 -28rpx; padding: 16rpx 20rpx; border-top: 1rpx solid #e4e9ed; background: #fff; }
+.composer input { flex: 1; min-width: 0; height: 70rpx; padding: 0 18rpx; border: 1rpx solid #dce3e8; border-radius: 10rpx; box-sizing: border-box; background: #f8fafb; color: #25313a; font-size: 26rpx; }
+.send-button { flex: 0 0 112rpx; display: flex; width: 112rpx; height: 70rpx; align-items: center; justify-content: center; margin: 0; padding: 0; font-size: 25rpx; line-height: 1; text-align: center; }
+.mini-nav { flex: 0 0 auto; z-index: 5; display: flex; gap: 6rpx; margin: 0 -28rpx -28rpx; padding: 14rpx 16rpx calc(14rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #e8edf1; background: rgba(255,255,255,.96); }
+.mini-nav-item { flex: 1; min-width: 0; margin: 0; padding: 12rpx 2rpx; border-radius: 12rpx; background: transparent; color: #74808c; font-size: 22rpx; }
+.mini-nav-item.active { background: #fff4eb; color: #ea580c; }

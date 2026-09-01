@@ -12,6 +12,7 @@ Page({
     wx.navigateTo({ url: '/pages/address/address?checkout=1&remark=' + encodeURIComponent(this.data.remark || '') });
   },
   openHome() { wx.reLaunch({ url: '/pages/home/home' }); },
+  openMessages() { wx.reLaunch({ url: '/pages/messages/messages' }); },
   openOrders() { wx.reLaunch({ url: '/pages/orders/orders' }); },
   openAddress() { wx.reLaunch({ url: '/pages/address/address' }); }
 });

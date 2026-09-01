@@ -2,7 +2,8 @@
 .brand-mark { width: 132rpx; height: 132rpx; line-height: 132rpx; margin: 0 auto 36rpx; border-radius: 28rpx; background: #f97316; color: #fff; font-size: 42rpx; font-weight: 700; }
 .login-panel { margin-top: 26rpx; padding: 34rpx 30rpx; }
 .intro { margin-top: 12rpx; line-height: 1.7; }
-.login-button { margin-top: 48rpx; height: 88rpx; line-height: 88rpx; }
-.courier-entry { margin-top: 18rpx; height: 78rpx; line-height: 78rpx; }
+.login-button, .courier-entry { display: flex; align-items: center; justify-content: center; padding: 0; text-align: center; line-height: 1; }
+.login-button { margin-top: 40rpx; height: 88rpx; font-size: 30rpx; }
+.courier-entry { margin-top: 16rpx; height: 78rpx; font-size: 28rpx; }
 .legal { margin-top: 24rpx; text-align: center; font-size: 22rpx; }
-.error { margin-top: 20rpx; padding: 18rpx; border-radius: 10rpx; background: #fff0ed; color: #c43d2e; }
+.error { margin-top: 20rpx; padding: 18rpx; border-radius: 10rpx; background: #fff0ed; color: #c43d2e; font-size: 26rpx; line-height: 1.5; }

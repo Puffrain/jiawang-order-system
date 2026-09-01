@@ -4,6 +4,7 @@
     "pages/home/home",
     "pages/product/product",
     "pages/cart/cart",
+    "pages/messages/messages",
     "pages/orders/orders",
     "pages/address/address",
     "pages/courier-login/courier-login",

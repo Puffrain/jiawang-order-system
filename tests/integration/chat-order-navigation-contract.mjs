@@ -11,7 +11,7 @@ const orderCenter = read("components/admin/order-center.tsx");
 const chatPanel = read("components/chat/chat-panel.tsx");
 const orderCard = read("components/chat/order-message-card.tsx");
 
-assert.match(chatPanel,/onClick=\{onOpenOrder\s*\?\s*\(\)\s*=>\s*onOpenOrder\(message\.orderId!\)\s*:\s*undefined\}/);
+assert.match(chatPanel,/onClick=\{\s*onOpenOrder\s*\?\s*\(\)\s*=>\s*onOpenOrder\(message\.orderId!\)\s*:\s*undefined\s*\}/);
 assert.ok(conversations.includes("onOpenOrder={onOpenOrder}"));
 assert.ok(dashboard.includes(`openOrder=(orderId:string)=>{setOrderToOpen(orderId);selectTab("orders")}`));
 assert.ok(dashboard.includes("initialOrderId={orderToOpen}"));

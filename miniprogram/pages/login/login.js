@@ -14,6 +14,8 @@ Page({
           getApp().globalData.role = payload.role || 'buyer';
           wx.setStorageSync('sessionToken', token);
           wx.setStorageSync('sessionRole', payload.role || 'buyer');
+          wx.removeStorageSync('sessionUserId');
+          getApp().globalData.userId = '';
           wx.reLaunch({ url: '/pages/home/home' });
         }).catch((error) => this.setData({ error: error?.message || error?.errMsg || '登录请求失败，请检查小程序合法域名配置' })).finally(() => this.setData({ loading: false }));
       },

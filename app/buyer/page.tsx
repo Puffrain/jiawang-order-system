@@ -41,6 +41,7 @@ type Product = {
   subcategoryKey?: string | null;
   brand?: string;
   description?: string;
+  salesCount: number;
   primaryImage: { url: string } | null;
   images: { id: string; url: string }[];
   skus: Sku[];
@@ -354,7 +355,7 @@ export default function BuyerPage() {
             />
           )}{" "}
           {tab === "messages" && profile && (
-            <div className="p-3 lg:p-8">
+            <div className="h-[calc(100dvh-11.75rem)] p-3 lg:h-[calc(100vh-15.5rem)] lg:p-8">
               <ChatPanel currentUserId={profile.id} title="联系商户" />
             </div>
           )}{" "}

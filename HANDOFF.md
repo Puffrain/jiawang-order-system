@@ -1,5 +1,31 @@
 # Handoff
 
+## 2026-09-01 小程序消息页与界面验收候选
+
+用户确认继续本地界面优化，但本轮明确不部署服务器、不提交、也不推送 GitHub。已新增 `miniprogram/pages/messages/`，消息数据直接使用既有 Web 后端 `GET /api/auth/me`、`GET /api/chat/messages`、`POST /api/chat/messages`；发送方生成 `clientMessageId`，后端负责幂等和权限判断。消息页每 10 秒刷新，离开页面会清理定时器，支持文字发送、空态、加载/发送失败提示和订单跳转。复杂图片、语音、商品推荐消息没有伪造成可发送能力，首版保守展示。
+
+小程序导航已统一为“首页 / 购物车 / 消息 / 订单 / 我的”，首页、购物车、订单、地址均可进入消息页。商品标题已限制溢出，加购按钮为固定圆形；地址和订单页面使用固定页面高度与内部 `scroll-view`，以保证无订单或数据很长时底栏仍固定。设计预览 `docs/design-previews/miniprogram-mobile-preview.html` 已增加消息页面和五项导航。
+
+本地证据：所有相关小程序 JavaScript `node --check`、`pnpm run test:miniprogram-contract`、`pnpm run scan:secrets`、`pnpm run test:chat-order-navigation`、`pnpm run test:buyer-responsive-layout`、`git diff --check` 均通过。真实开发者工具双向聊天、商品图片缓存显示仍待用户验收。工作区原本已脏；尤其 `miniprogram/project.config.json`、`miniprogram/project.private.config.json` 是用户调试配置，绝不还原、提交或覆盖。
+
+用户验收步骤：微信开发者工具点击“编译”，进入首页确认五项导航、标题和圆形加购按钮；进入“消息”确认可以看到 Web 后台相同的历史消息；从小程序发一条文字，在 Web 后台“客户消息”确认出现；再从后台回复，回小程序等待约 10 秒或切换页面回来确认收到。随后检查地址和订单页面在空数据、长数据下底栏固定。只有用户再次明确批准后，才开始独立审查、提交、推送或服务器发布。
+
+## 2026-09-01 小程序微信登录配置与登录页样式
+
+用户在微信开发者工具检查时发现登录页按钮文字过大，且微信登录提示"小程序服务尚未配置"。根因分离后处理：微信原生 `button` 没有稳定继承页面字号，已在 `miniprogram/app.wxss` 指定 `28rpx`，登录页分别指定按钮和错误提示字号；静态小程序契约增加对应保护。
+
+服务器根因是 `/opt/jiawang-commerce-new/.env` 未设置 `WECHAT_MINI_APPID`、`WECHAT_MINI_SECRET`。从本地受控 `server.env` 仅同步这两项，保留服务器更新前 `.env` 备份 `.env.before-mini-login-20260901-110933`，并受控重建 `order-web`。五个服务仍为 running；服务器临时源文件和临时脚本已删除，容器两项变量只以脱敏方式确认存在。
+
+已通过 `pnpm run test:miniprogram-contract`、两份登录 JS 的 `node --check` 和 `git diff --check`。真实登录尚待用户在微信开发者工具重新编译后点击微信登录，用实际 `wx.login` 生成的一次性 code 验收；不得以无效 code 或生产用户数据替代。当前样式源码未提交或推送，且用户的 `miniprogram/project.config.json`、`miniprogram/project.private.config.json` 改动必须排除。
+
+## 2026-09-01 网页买家端可滚动列表候选版本
+
+用户要求网页买家端的商品列表参考外卖应用的使用方式：商品内容和分类栏在固定可见区域中独立上下滚动；同时将误用库存排序的 "库存优先" 修正为真实 "销量优先"。本轮只修改了 `app/buyer/page.tsx`、`components/buyer/catalog-home.tsx`、`lib/product-catalog.ts` 和两项相关契约测试；没有修改或检查小程序页面。
+
+真实销量定义为累计已收款、未退款、未删除订单中的 `order_items.quantity`。聊天页外层现在提供视口高度，原有 `ChatPanel` 的 flex 和内部滚动逻辑因此生效，输入框保持在底部。已通过买家响应式和聊天跳转契约、TypeScript、改动文件 ESLint、密钥扫描、空白检查和 `next build --webpack`。`test:product-flow` 因缺少隔离的 `TEST_OWNER_PHONE`、`TEST_OWNER_PASSWORD` 被阻塞，未使用真实账号绕过。
+
+工作树仍包含用户自己在微信开发者工具产生的 `miniprogram/project.config.json`、`miniprogram/project.private.config.json` 改动，绝不可恢复、提交或覆盖。本轮未部署、未提交、未推送；若后续准备发布，须先独立审查候选 diff、让用户确认浏览效果，并仅暂存上述 5 个网页和测试文件。
+
 ## 2026-09-01 并发退款保护与最终本地验收
 
 本轮新增退款竞态保护：`wechat_refunds` 对每个订单只允许一条全额退款记录，新增迁移脚本和幂等迁移测试；退款接口在并发唯一约束冲突时返回已有记录，不重复调用微信退款。支付成功和退款成功通知在重复到达时分别校验交易号、退款号完全一致，小程序支付按钮继续由服务端能力接口控制。

@@ -24,8 +24,10 @@ function request(path, options = {}) {
         if (res.statusCode === 401) {
           wx.removeStorageSync('sessionToken');
           wx.removeStorageSync('sessionRole');
+          wx.removeStorageSync('sessionUserId');
           app.globalData.sessionToken = '';
           app.globalData.role = '';
+          app.globalData.userId = '';
           wx.reLaunch({ url: '/pages/login/login' });
         }
         reject(new Error((res.data && res.data.error) || '请求失败'));

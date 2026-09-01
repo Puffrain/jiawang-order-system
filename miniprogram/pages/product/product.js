@@ -1,12 +1,13 @@
-const { request, assetUrl } = require('../../utils/request');
+const { request } = require('../../utils/request');
+const { hydrateImages } = require('../../utils/product-image-cache');
 
 Page({
   data: { product: null, selectedSku: null, quantity: 1, loading: true, error: '' },
   onLoad(options) { this.id = options.id; this.load(); },
   load() {
-    request('/api/products/' + encodeURIComponent(this.id)).then(({ product }) => {
+    request('/api/products/' + encodeURIComponent(this.id)).then(async ({ product }) => {
       if (!product) throw new Error('商品不存在或已下架');
-      product.images = (product.images || []).map(image => Object.assign(image, { imageUrl: assetUrl(image.url) }));
+      product.images = await hydrateImages(product.images);
       this.setData({ product, selectedSku: product.skus && product.skus[0] });
     }).catch(error => this.setData({ error: error.message })).finally(() => this.setData({ loading: false }));
   },
