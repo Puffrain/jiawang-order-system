@@ -20,6 +20,7 @@ import AddressManager, {
 } from "@/components/buyer/address-manager";
 import ProfileEditor from "@/components/buyer/profile-editor";
 import OrderList from "@/components/buyer/order-list";
+import OrderReviews from "@/components/buyer/order-reviews";
 import ChatPanel from "@/components/chat/chat-panel";
 import AccountSecurity from "@/components/buyer/account-security";
 import LoyaltyEntry from "@/components/buyer/loyalty-entry";
@@ -348,11 +349,14 @@ export default function BuyerPage() {
             />
           )}{" "}
           {tab === "orders" && (
+            <>
+            <OrderReviews orders={orders} />
             <OrderList
               orders={orders}
               reload={load}
               onChat={() => setTab("messages")}
             />
+            </>
           )}{" "}
           {tab === "messages" && profile && (
             <div className="h-[calc(100dvh-11.75rem)] p-3 lg:h-[calc(100vh-15.5rem)] lg:p-8">

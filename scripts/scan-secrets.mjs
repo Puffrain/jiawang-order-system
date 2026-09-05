@@ -4,7 +4,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
-const ignoredDirectories = new Set([".git", ".next", ".task-backups", ".task-runs", "node_modules", "uploads", "data", "backups", "coverage", "test-results", "playwright-report"]);
+const ignoredDirectories = new Set([".git", ".next", ".next-review-verify", ".task-backups", ".task-runs", "node_modules", "uploads", "data", "backups", "coverage", "test-results", "playwright-report"]);
 const ignoredExtensions = new Set([".ico", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf", ".db", ".sqlite", ".sqlite3", ".jwbackup", ".lock", ".tsbuildinfo"]);
 const patterns = [
   ["private key", /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/],

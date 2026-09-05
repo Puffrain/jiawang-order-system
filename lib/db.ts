@@ -239,6 +239,16 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS idx_customer_notices_public ON customer_notices(status,published_at,updated_at);
+  CREATE TABLE IF NOT EXISTS product_reviews (
+    id TEXT PRIMARY KEY, order_id TEXT NOT NULL, order_item_id TEXT NOT NULL, product_id TEXT NOT NULL,
+    buyer_user_id TEXT NOT NULL, rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5), content TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'published' CHECK(status IN ('published','hidden')),
+    merchant_reply TEXT, merchant_replied_at TEXT, hidden_at TEXT, hidden_by TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(order_id,order_item_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id,status,created_at);
+  CREATE INDEX IF NOT EXISTS idx_product_reviews_order ON product_reviews(order_id,created_at);
   CREATE TABLE IF NOT EXISTS schema_migrations (
     version TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
