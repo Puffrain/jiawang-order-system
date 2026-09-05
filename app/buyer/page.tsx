@@ -403,9 +403,9 @@ export default function BuyerPage() {
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-100 text-orange-600">
                 <Grid2X2 />
               </div>
-              <h2 className="mt-5 text-xl font-bold">真实库存，自动阶梯价</h2>
+              <h2 className="mt-5 text-xl font-bold">批发采购，自动阶梯价</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                选购后进入购物车，系统会按数量重新计算批发价；提交时还会再次检查库存。
+                选购后进入购物车，系统会按数量重新计算批发价；提交前会再次确认商品可售状态。
               </p>
               <button
                 onClick={finishTour}
@@ -479,11 +479,10 @@ function CartView({
                     {item.productName || "商品已不可售"}
                   </p>
                   <p className="mt-1 break-words text-xs text-slate-500">
-                    {item.specName || "规格信息不可用"} · 数量 {item.quantity} ·
-                    库存 {item.stock}
+                    {item.specName || "规格信息不可用"} · 数量 {item.quantity}
                   </p>
                   <p className="mt-1 break-words text-xs text-amber-800">
-                    {item.reason || "该商品当前无法购买"}
+                    {item.reason || (item.stock <= 0 ? "库存不足，联系商家" : "该商品当前无法购买")}
                   </p>
                 </div>
                 <button

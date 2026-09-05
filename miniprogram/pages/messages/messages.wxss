@@ -8,6 +8,7 @@
 .message-row.system { justify-content: center; }
 .message-row.system .message-bubble { max-width: 88%; border-color: #f5d7ac; background: #fff8e8; color: #8a5214; text-align: center; }
 .message-content { font-size: 27rpx; line-height: 1.55; word-break: break-all; }
+.message-image { display: block; width: 420rpx; max-width: 100%; max-height: 520rpx; border-radius: 10rpx; background: #f4f6f8; }
 .message-order { margin-top: 10rpx; color: #c75a17; font-size: 22rpx; }
 .message-time { margin-top: 8rpx; color: #84909a; font-size: 21rpx; text-align: right; }
 .message-row.system .message-time { text-align: center; }
@@ -15,6 +16,10 @@
 .center { padding: 80rpx 0; text-align: center; }
 .composer { flex: 0 0 auto; display: flex; align-items: center; gap: 14rpx; margin: 0 -28rpx; padding: 16rpx 20rpx; border-top: 1rpx solid #e4e9ed; background: #fff; }
 .composer input { flex: 1; min-width: 0; height: 70rpx; padding: 0 18rpx; border: 1rpx solid #dce3e8; border-radius: 10rpx; box-sizing: border-box; background: #f8fafb; color: #25313a; font-size: 26rpx; }
+.image-button { flex: 0 0 84rpx; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; height: 70rpx; background: transparent; }
+.camera-icon { position: relative; width: 38rpx; height: 28rpx; box-sizing: border-box; border: 3rpx solid #64748b; border-radius: 5rpx; }
+.camera-icon::before { content: ''; position: absolute; top: -8rpx; left: 8rpx; width: 14rpx; height: 7rpx; border: 3rpx solid #64748b; border-bottom: 0; border-radius: 4rpx 4rpx 0 0; }
+.camera-lens { position: absolute; top: 6rpx; left: 10rpx; width: 12rpx; height: 12rpx; box-sizing: border-box; border: 3rpx solid #64748b; border-radius: 50%; }
 .send-button { flex: 0 0 112rpx; display: flex; width: 112rpx; height: 70rpx; align-items: center; justify-content: center; margin: 0; padding: 0; font-size: 25rpx; line-height: 1; text-align: center; }
 .mini-nav { flex: 0 0 auto; z-index: 5; display: flex; gap: 6rpx; margin: 0 -28rpx -28rpx; padding: 14rpx 16rpx calc(14rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #e8edf1; background: rgba(255,255,255,.96); }
 .mini-nav-item { flex: 1; min-width: 0; margin: 0; padding: 12rpx 2rpx; border-radius: 12rpx; background: transparent; color: #74808c; font-size: 22rpx; }

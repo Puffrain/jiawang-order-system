@@ -1,6 +1,6 @@
 {
   "name": "wholesale-crm",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "private": true,
   "scripts": {
     "dev": "SMS_PREVIEW_MODE=true next dev --webpack -H 0.0.0.0",

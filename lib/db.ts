@@ -59,6 +59,10 @@ db.exec(`
     expires_at TEXT NOT NULL, attempt_count INTEGER NOT NULL DEFAULT 0, consumed_at TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_verification_challenges_lookup ON verification_challenges(phone,purpose,expires_at);
+  CREATE TABLE IF NOT EXISTS wechat_login_tickets (
+    id TEXT PRIMARY KEY, openid TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_wechat_login_tickets_expiry ON wechat_login_tickets(expires_at);
 
   CREATE TABLE IF NOT EXISTS customer_profile (
     user_id TEXT PRIMARY KEY, shop_name TEXT, shop_address TEXT, business_type TEXT,
@@ -249,6 +253,7 @@ ensureColumn("users", "updated_at", "TEXT");
 ensureColumn("users", "wechat_openid", "TEXT");
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wechat_openid ON users(wechat_openid) WHERE wechat_openid IS NOT NULL");
 ensureColumn("customer_profile", "updated_at", "TEXT");
+ensureColumn("customer_profile", "avatar_url", "TEXT");
 db.prepare("UPDATE users SET updated_at=COALESCE(updated_at,created_at,CURRENT_TIMESTAMP) WHERE updated_at IS NULL").run();
 db.prepare("UPDATE customer_profile SET updated_at=COALESCE(updated_at,created_at,CURRENT_TIMESTAMP) WHERE updated_at IS NULL").run();
 ensureColumn("product_skus", "campaign_price", "REAL");

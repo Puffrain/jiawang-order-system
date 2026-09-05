@@ -1,9 +1,18 @@
-.login-page { padding-top: 44rpx; text-align: left; }
-.brand-mark { width: 132rpx; height: 132rpx; line-height: 132rpx; margin: 0 auto 36rpx; border-radius: 28rpx; background: #f97316; color: #fff; font-size: 42rpx; font-weight: 700; }
-.login-panel { margin-top: 26rpx; padding: 34rpx 30rpx; }
+.login-page { position: relative; min-height: 100vh; padding-top: 28rpx; text-align: left; }
+.login-page .brand-banner { display: block; height: 300rpx; border-radius: 16rpx; box-shadow: 0 10rpx 24rpx rgba(15,23,42,.12); }
+.login-page .brand-strip { margin-top: 20rpx; }
+.login-panel { margin-top: 22rpx; padding: 34rpx 30rpx; }
 .intro { margin-top: 12rpx; line-height: 1.7; }
 .login-button, .courier-entry { display: flex; align-items: center; justify-content: center; padding: 0; text-align: center; line-height: 1; }
 .login-button { margin-top: 40rpx; height: 88rpx; font-size: 30rpx; }
-.courier-entry { margin-top: 16rpx; height: 78rpx; font-size: 28rpx; }
+.courier-entry { position: absolute; right: 28rpx; bottom: 42rpx; height: 54rpx; margin: 0; padding: 0 18rpx; border: 0; background: transparent; color: #8a96a3; font-size: 22rpx; }
 .legal { margin-top: 24rpx; text-align: center; font-size: 22rpx; }
 .error { margin-top: 20rpx; padding: 18rpx; border-radius: 10rpx; background: #fff0ed; color: #c43d2e; font-size: 26rpx; line-height: 1.5; }
+.error:before { content: '!'; display: inline-flex; width: 32rpx; height: 32rpx; margin-right: 10rpx; border-radius: 50%; align-items: center; justify-content: center; background: #c43d2e; color: #fff; font-size: 22rpx; vertical-align: middle; }
+.phone-bind { margin-top: 28rpx; }
+.bind-title { margin-bottom: 16rpx; color: #26323c; font-size: 30rpx; font-weight: 700; }
+.phone-input, .code-input { height: 80rpx; box-sizing: border-box; border: 1rpx solid #dce3e8; border-radius: 10rpx; background: #f8fafb; padding: 0 20rpx; color: #25313a; font-size: 27rpx; }
+.code-row { display: flex; gap: 14rpx; margin-top: 16rpx; }
+.code-input { flex: 1; min-width: 0; }
+.code-button { flex: 0 0 208rpx; height: 80rpx; margin: 0; padding: 0 10rpx; border: 1rpx solid #f47721; border-radius: 10rpx; background: #fff4eb; color: #c95312; font-size: 24rpx; line-height: 1; }
+.development-code { margin-top: 14rpx; padding: 14rpx; border-radius: 8rpx; background: #fff8e8; color: #8a5214; font-size: 23rpx; }

@@ -6,6 +6,9 @@
     "pages/cart/cart",
     "pages/messages/messages",
     "pages/orders/orders",
+    "pages/profile/profile",
+    "pages/points/points",
+    "pages/review/review",
     "pages/address/address",
     "pages/courier-login/courier-login",
     "pages/courier-orders/courier-orders"

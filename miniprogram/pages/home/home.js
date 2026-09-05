@@ -38,22 +38,38 @@ Page({
     loading: true,
     error: ''
   },
-  onShow() { this.load(); },
+  onShow() {
+    request('/api/customers/profile').then(({ profile }) => {
+      if (profile && !profile.profileCompleted) {
+        wx.reLaunch({ url: '/pages/profile/profile?onboarding=1' });
+        return;
+      }
+      this.load();
+    }).catch(() => this.load());
+  },
   load() {
     this.setData({ loading: true, error: '' });
-    Promise.allSettled([request('/api/products'), request('/api/notices')])
-      .then(async ([productsResult, noticesResult]) => {
-        if (productsResult.status !== 'fulfilled') throw productsResult.reason;
-        const { products = [] } = productsResult.value;
-        const notices = noticesResult.status === 'fulfilled' ? noticesResult.value.notices || [] : [];
-        const notice = notices[0] || null;
-        const hydratedProducts = await hydrateProductImages(products);
+    const productRequest = request('/api/products');
+    const noticeRequest = request('/api/notices');
+    Promise.allSettled([productRequest, noticeRequest]).catch(() => {});
+    productRequest
+      .then(({ products = [] }) => {
+        const visibleProducts = (products || []).map((product) => Object.assign({}, product, { imageUrl: '', outOfStock: Number(product.totalStock || 0) <= 0 }));
         this.setData({
-          allProducts: hydratedProducts,
-          categories: buildCategories(hydratedProducts),
-          notice: notice ? Object.assign({}, notice, { summary: noticeSummary(notice) }) : null
+          allProducts: visibleProducts,
+          categories: buildCategories(visibleProducts),
         });
         this.applyFilters();
+        hydrateProductImages(products).then((hydratedProducts) => {
+          const byId = new Map(hydratedProducts.map((product) => [product.id, product.imageUrl]));
+          const updated = this.data.allProducts.map((product) => Object.assign({}, product, { imageUrl: byId.get(product.id) || '' }));
+          this.setData({ allProducts: updated });
+          this.applyFilters();
+        });
+        noticeRequest.then(({ notices = [] }) => {
+          const notice = notices[0] || null;
+          this.setData({ notice: notice ? Object.assign({}, notice, { summary: noticeSummary(notice) }) : null });
+        }).catch(() => {});
       })
       .catch(error => this.setData({ error: error.message }))
       .finally(() => this.setData({ loading: false }));
@@ -92,5 +108,6 @@ Page({
   openCart() { wx.navigateTo({ url: '/pages/cart/cart' }); },
   openMessages() { wx.navigateTo({ url: '/pages/messages/messages' }); },
   openOrders() { wx.navigateTo({ url: '/pages/orders/orders' }); },
-  openAddress() { wx.navigateTo({ url: '/pages/address/address' }); }
+  openAddress() { wx.navigateTo({ url: '/pages/address/address' }); },
+  openProfile() { wx.reLaunch({ url: '/pages/profile/profile' }); }
 });

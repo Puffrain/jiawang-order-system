@@ -74,10 +74,7 @@ export default function CatalogHome({ products, notices, onAdded }: { products: 
 }
 
 function lowest(product: Product) { const values = product.skus.flatMap((sku) => [sku.basePrice, ...sku.tiers.map((tier) => tier.unitPrice)]); return values.length ? Math.min(...values) : 0; }
-function stock(product: Product) { return product.skus.reduce((sum, sku) => sum + sku.stock, 0); }
-
 function ProductRow({ product, adding, add }: { product: Product; adding: boolean; add: () => void }) {
-  const quantity = stock(product);
   const price = lowest(product);
   const sku = product.skus.find((item) => item.stock > 0);
   return <article data-buyer-product-card className="flex min-h-36 gap-3 border-b p-3 lg:min-h-0 lg:flex-col lg:overflow-hidden lg:rounded-lg lg:border lg:p-0 lg:shadow-sm">
@@ -86,7 +83,7 @@ function ProductRow({ product, adding, add }: { product: Product; adding: boolea
     </Link>
     <div className="min-w-0 flex-1 lg:flex lg:min-h-[160px] lg:flex-col lg:px-4 lg:pb-4">
       <Link href={"/buyer/products/" + product.id}><h3 className="line-clamp-2 font-medium leading-6 text-slate-900">{product.name}</h3><p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{product.description || product.brand || product.category}</p></Link>
-      <p className="mt-1 text-xs text-orange-600">库存 {quantity} 件</p>
+      {!sku && <p className="mt-1 text-xs font-semibold text-red-600">库存不足，联系商家</p>}
       <div className="mt-1 flex items-end justify-between gap-2 lg:mt-auto"><strong className="text-xl text-red-600">{money(price)}</strong><button type="button" onClick={add} disabled={!sku || adding} aria-label={"将" + product.name + "加入购物车"} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-white shadow-sm disabled:bg-slate-300"><ShoppingCart size={19} /></button></div>
     </div>
   </article>;
