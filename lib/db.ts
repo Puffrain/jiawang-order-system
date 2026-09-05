@@ -10,15 +10,18 @@ function databasePath() {
 const filePath = databasePath();
 fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
-const db = new Database(filePath, { timeout: 5000 });
-db.pragma("busy_timeout = 10000");
-db.pragma("journal_mode = WAL");
+// Cold starts can run the schema bootstrap concurrently (web workers and
+// build workers). Give SQLite enough time to wait for the bootstrap lock
+// instead of failing a healthy process with SQLITE_BUSY. Do not change the
+// journal mode during every process startup: that operation itself races.
+const db = new Database(filePath, { timeout: 30000 });
+db.pragma("busy_timeout = 30000");
 db.pragma("foreign_keys = ON");
 
 // Web, workers and Next build workers may cold-start against the same file.
 // Serialize the complete bootstrap so guarded ALTER TABLE statements cannot
 // race after two processes observe the same pre-migration schema.
-db.exec("BEGIN IMMEDIATE");
+db.exec("BEGIN EXCLUSIVE");
 try {
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -56,6 +59,10 @@ db.exec(`
     expires_at TEXT NOT NULL, attempt_count INTEGER NOT NULL DEFAULT 0, consumed_at TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_verification_challenges_lookup ON verification_challenges(phone,purpose,expires_at);
+  CREATE TABLE IF NOT EXISTS wechat_login_tickets (
+    id TEXT PRIMARY KEY, openid TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_wechat_login_tickets_expiry ON wechat_login_tickets(expires_at);
 
   CREATE TABLE IF NOT EXISTS customer_profile (
     user_id TEXT PRIMARY KEY, shop_name TEXT, shop_address TEXT, business_type TEXT,
@@ -141,6 +148,28 @@ db.exec(`
     shipping_fee REAL NOT NULL DEFAULT 0, total_amount REAL NOT NULL, reason TEXT, operator_id TEXT,
     confirmed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(order_id,version)
   );
+  CREATE TABLE IF NOT EXISTS wechat_payment_intents (
+    id TEXT PRIMARY KEY, order_id TEXT NOT NULL, order_version INTEGER NOT NULL,
+    out_trade_no TEXT NOT NULL UNIQUE, amount_fen INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'created',
+    prepay_id TEXT, transaction_id TEXT UNIQUE, payer_openid TEXT NOT NULL,
+    expires_at TEXT, paid_at TEXT, failure_code TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(order_id,order_version)
+  );
+  CREATE INDEX IF NOT EXISTS idx_wechat_payment_order ON wechat_payment_intents(order_id,status,updated_at);
+  CREATE TABLE IF NOT EXISTS wechat_refunds (
+    id TEXT PRIMARY KEY, order_id TEXT NOT NULL, payment_intent_id TEXT NOT NULL,
+    out_refund_no TEXT NOT NULL UNIQUE, refund_id TEXT UNIQUE, amount_fen INTEGER NOT NULL,
+    total_fen INTEGER NOT NULL, reason TEXT, status TEXT NOT NULL DEFAULT 'created',
+    success_at TEXT, failure_code TEXT, requested_by TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ,UNIQUE(order_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_wechat_refund_order ON wechat_refunds(order_id,status,updated_at);
+  CREATE TABLE IF NOT EXISTS wechat_pay_notifications (
+    notification_id TEXT PRIMARY KEY, event_type TEXT NOT NULL, resource_type TEXT NOT NULL,
+    resource_id TEXT, payload_hash TEXT NOT NULL, processed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
   CREATE TABLE IF NOT EXISTS order_quote_items (
     id TEXT PRIMARY KEY, quote_id TEXT NOT NULL, order_item_id TEXT NOT NULL,
     old_unit_price REAL NOT NULL, new_unit_price REAL NOT NULL, quantity INTEGER NOT NULL, line_total REAL NOT NULL
@@ -210,6 +239,16 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS idx_customer_notices_public ON customer_notices(status,published_at,updated_at);
+  CREATE TABLE IF NOT EXISTS product_reviews (
+    id TEXT PRIMARY KEY, order_id TEXT NOT NULL, order_item_id TEXT NOT NULL, product_id TEXT NOT NULL,
+    buyer_user_id TEXT NOT NULL, rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5), content TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'published' CHECK(status IN ('published','hidden')),
+    merchant_reply TEXT, merchant_replied_at TEXT, hidden_at TEXT, hidden_by TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(order_id,order_item_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id,status,created_at);
+  CREATE INDEX IF NOT EXISTS idx_product_reviews_order ON product_reviews(order_id,created_at);
   CREATE TABLE IF NOT EXISTS schema_migrations (
     version TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
@@ -221,7 +260,10 @@ function ensureColumn(table: string, column: string, definition: string) {
   if (!names.has(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 ensureColumn("users", "updated_at", "TEXT");
+ensureColumn("users", "wechat_openid", "TEXT");
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wechat_openid ON users(wechat_openid) WHERE wechat_openid IS NOT NULL");
 ensureColumn("customer_profile", "updated_at", "TEXT");
+ensureColumn("customer_profile", "avatar_url", "TEXT");
 db.prepare("UPDATE users SET updated_at=COALESCE(updated_at,created_at,CURRENT_TIMESTAMP) WHERE updated_at IS NULL").run();
 db.prepare("UPDATE customer_profile SET updated_at=COALESCE(updated_at,created_at,CURRENT_TIMESTAMP) WHERE updated_at IS NULL").run();
 ensureColumn("product_skus", "campaign_price", "REAL");
@@ -258,6 +300,10 @@ for (const [column, definition] of [["order_version", "INTEGER NOT NULL DEFAULT 
 for (const [column, definition] of [["shipping_carrier", "TEXT"], ["tracking_number", "TEXT"], ["tracking_url", "TEXT"], ["paid_at", "TEXT"], ["payment_confirmed_by", "TEXT"], ["shipped_at", "TEXT"]] as const) ensureColumn("orders", column, definition);
 for (const [column, definition] of [["courier_user_id", "TEXT"], ["delivery_started_at", "TEXT"], ["delivered_at", "TEXT"], ["delivery_proof_json", "TEXT"], ["delivery_failure_reason", "TEXT"]] as const) ensureColumn("orders", column, definition);
 ensureColumn("orders", "customer_received_at", "TEXT");
+ensureColumn("orders", "wechat_transaction_id", "TEXT");
+ensureColumn("orders", "refunded_at", "TEXT");
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_wechat_transaction ON orders(wechat_transaction_id) WHERE wechat_transaction_id IS NOT NULL");
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_wechat_refund_one_per_order ON wechat_refunds(order_id)");
 db.exec("CREATE INDEX IF NOT EXISTS idx_orders_courier ON orders(courier_user_id,fulfillment_status,updated_at)");
 db.exec("CREATE TABLE IF NOT EXISTS order_revisions (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, version INTEGER NOT NULL, snapshot_json TEXT NOT NULL, reason TEXT NOT NULL, actor_user_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(order_id,version))");
 db.exec("CREATE INDEX IF NOT EXISTS idx_order_revisions_order ON order_revisions(order_id,version)");

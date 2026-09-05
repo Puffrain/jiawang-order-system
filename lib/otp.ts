@@ -1,7 +1,7 @@
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import db from "@/lib/db";
 
-export type OtpPurpose = "buyer_access" | "buyer_register" | "password_reset" | "owner_password_reset";
+export type OtpPurpose = "buyer_access" | "buyer_register" | "wechat_bind" | "password_reset" | "owner_password_reset";
 
 function secret() {
   const value = process.env.SESSION_SECRET;

@@ -10,7 +10,7 @@ export function refreshProfileCompletion(userId:string){
 }
 
 export function buyerProfile(userId:string){
-  const profile=db.prepare(`SELECT u.id,u.phone,u.display_name displayName,p.shop_name shopName,p.business_type businessType,p.profile_completed profileCompleted FROM users u LEFT JOIN customer_profile p ON p.user_id=u.id WHERE u.id=? AND u.role='buyer'`).get(userId) as {id:string;phone:string;displayName:string|null;shopName:string|null;businessType:string|null;profileCompleted:number}|undefined;
+  const profile=db.prepare(`SELECT u.id,u.phone,u.display_name displayName,p.avatar_url avatarUrl,p.shop_name shopName,p.business_type businessType,p.profile_completed profileCompleted FROM users u LEFT JOIN customer_profile p ON p.user_id=u.id WHERE u.id=? AND u.role='buyer'`).get(userId) as {id:string;phone:string;displayName:string|null;avatarUrl:string|null;shopName:string|null;businessType:string|null;profileCompleted:number}|undefined;
   if(!profile)return null;
   const addressCount=(db.prepare("SELECT COUNT(*) count FROM addresses WHERE user_id=?").get(userId) as {count:number}).count;
   return {...profile,profileCompleted:Boolean(profile.profileCompleted&&addressCount>0),addressCount};

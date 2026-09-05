@@ -1,0 +1,1 @@
+.points-page{padding:24rpx}.points-hero{background:#d97706;color:#fff;padding:48rpx;border-radius:16rpx;margin-bottom:24rpx}.label{opacity:.85}.balance{font-size:72rpx;font-weight:700;margin-top:12rpx}.ledger{display:flex;justify-content:space-between;align-items:center;padding:24rpx;margin-bottom:12rpx}.amount{font-weight:700}.plus{color:#15803d}.minus{color:#dc2626}

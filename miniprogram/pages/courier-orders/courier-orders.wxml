@@ -1,0 +1,14 @@
+<view class="page">
+  <view class="brand-strip"><view class="brand-name">配送工作台</view><view class="brand-caption">仅显示分配给当前账号的订单</view></view>
+  <view class="row section"><view class="title">配送订单</view><button class="ghost small" bindtap="logout">退出</button></view>
+  <view class="filter-tabs"><button wx:for="{{filters}}" wx:key="key" class="filter-tab {{filter === item.key ? 'selected' : ''}}" data-key="{{item.key}}" bindtap="changeFilter">{{item.label}}</button></view>
+  <view wx:if="{{loading}}" class="muted center">正在加载...</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <view wx:for="{{visibleOrders}}" wx:key="id" class="card order-card">
+    <view class="row"><text class="order-no">{{item.orderNo}}</text><text class="status status-{{item.statusTone}}">{{item.fulfillmentLabel}}</text></view>
+    <view class="muted recipient-line">{{item.recipientSnapshot.name}} {{item.recipientSnapshot.phone}}</view>
+    <view class="muted address-line">{{item.recipientSnapshot.address}}</view>
+    <view class="actions"><button wx:if="{{item.fulfillmentStatus === 'assigned'}}" class="primary" data-id="{{item.id}}" data-action="start" bindtap="action">开始配送</button><button wx:if="{{item.fulfillmentStatus === 'out_for_delivery'}}" class="primary" data-id="{{item.id}}" data-action="deliver" bindtap="action">确认送达</button><button wx:if="{{item.fulfillmentStatus === 'assigned' || item.fulfillmentStatus === 'out_for_delivery'}}" class="danger" data-id="{{item.id}}" data-action="fail" bindtap="action">配送失败</button></view>
+  </view>
+  <view wx:if="{{!visibleOrders.length && !loading}}" class="empty"><view class="empty-mark">配</view><view class="empty-title">暂无符合条件的配送订单</view><view class="muted">新订单分配后会显示在这里</view></view>
+</view>

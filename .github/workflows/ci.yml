@@ -36,7 +36,7 @@ jobs:
           pnpm run validate:compose-build
           node tests/integration/isolated-preview-compose-contract.mjs
           node tests/integration/candidate-release-scripts-contract.mjs
-          APP_ORIGIN=https://ci.invalid APP_MASTER_KEY=0123456789abcdef0123456789abcdef SESSION_SECRET=0123456789abcdef0123456789abcdef INTEGRATION_SHARED_SECRET=abcdef0123456789abcdef0123456789 OWNER_PASSWORD=ci-only-password docker compose -f compose.yaml config --quiet
+          APP_ORIGIN=https://ci.invalid APP_MASTER_KEY=0123456789abcdef0123456789abcdef SESSION_SECRET=0123456789abcdef0123456789abcdef INTEGRATION_SHARED_SECRET=abcdef0123456789abcdef0123456789 OWNER_PHONE=13800000000 OWNER_PASSWORD=ci-only-password WECHAT_MINI_APPID=wx0000000000000000 WECHAT_MINI_SECRET=ci-only-secret docker compose -f compose.yaml config --quiet
       - name: Verify order system
         env:
           SESSION_SECRET: 0123456789abcdef0123456789abcdef
