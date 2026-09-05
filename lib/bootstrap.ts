@@ -12,8 +12,8 @@ function configuredOwnerAliases(primaryPhone: string) {
     .filter(phone => phone !== primaryPhone))];
 }
 
-function syncOwnerAliases(ownerUserId: string, primaryPhone: string) {
-  const aliases = configuredOwnerAliases(primaryPhone);
+function syncOwnerAliases(ownerUserId: string, primaryPhone: string, sharedLoginPhone?: string) {
+  const aliases = [...new Set([...configuredOwnerAliases(primaryPhone), ...(sharedLoginPhone && sharedLoginPhone !== primaryPhone ? [sharedLoginPhone] : [])])];
   const invalid = aliases.find(phone => !isPhone(phone));
   if (invalid) throw new Error("OWNER_PHONE_ALIASES contains an invalid phone number");
 
@@ -41,18 +41,22 @@ export function ensureOwnerFromEnvironment() {
   if (existing) {
     if (!configured) return { ready: true };
     const passwordFingerprint = fingerprint(password);
+    const occupied = db.prepare("SELECT id,role FROM users WHERE phone=? AND id<>?").get(phone, existing.id) as { id: string; role: string } | undefined;
+    if (occupied && occupied.role !== "courier") return { ready: false, error: "老板登录号码被其他账号使用" };
+    // A courier can share the owner login number without sharing identity or credentials.
+    const storedPhone = occupied ? existing.phone : phone;
     const applied = db.prepare("SELECT password_fingerprint passwordFingerprint FROM owner_secret_state WHERE owner_user_id=?").get(existing.id) as { passwordFingerprint: string } | undefined;
-    if (applied?.passwordFingerprint === passwordFingerprint && existing.phone === phone) {
-      try { db.transaction(() => syncOwnerAliases(existing.id, phone))(); }
+    if (applied?.passwordFingerprint === passwordFingerprint && existing.phone === storedPhone) {
+      try { db.transaction(() => syncOwnerAliases(existing.id, storedPhone, phone))(); }
       catch { return { ready: false, error: "老板登录号码配置冲突，请确认备用号码未被其他账号使用" }; }
       return { ready: true };
     }
     try {
       db.transaction(() => {
-        db.prepare("UPDATE users SET phone=?,password_hash=?,display_name=COALESCE(NULLIF(?,''),display_name),status='active',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(phone, hashPassword(password), process.env.OWNER_NAME || "老板", existing.id);
+        db.prepare("UPDATE users SET phone=?,password_hash=?,display_name=COALESCE(NULLIF(?,''),display_name),status='active',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(storedPhone, hashPassword(password), process.env.OWNER_NAME || "老板", existing.id);
         db.prepare("UPDATE auth_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL").run(existing.id);
         db.prepare(`INSERT INTO owner_secret_state(owner_user_id,password_fingerprint) VALUES(?,?) ON CONFLICT(owner_user_id) DO UPDATE SET password_fingerprint=excluded.password_fingerprint,applied_at=CURRENT_TIMESTAMP`).run(existing.id, passwordFingerprint);
-        syncOwnerAliases(existing.id, phone);
+        syncOwnerAliases(existing.id, storedPhone, phone);
       })();
     } catch {
       return { ready: false, error: "老板账号配置冲突，请确认 OWNER_PHONE 没有被其他账号使用" };
