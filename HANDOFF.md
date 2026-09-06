@@ -1,5 +1,15 @@
 # Handoff
 
+## Latest deployment 2026-09-06
+
+57f490e is now deployed as image e7e149a3463f4bcd39ced00740a9a6c9fb72951c920a58491e55e5761a101b8d. Independent CLI review completed; previous review-tool blocking entries below are superseded. Server build, isolated API preview, backup checksum verification and FINALIZE_PASS completed. Only order Web/worker switched; warehouse/gateway unchanged. See docs/deployment-ui-login-57f490e.md for recovery point, exact source directory and real-device/browser acceptance limitations. Do not rebuild from older /opt/jiawang-commerce-new source.
+
+## 2026-09-06 UI/login candidate pushed
+
+User authorized push/deployment. Commit 57f490e7408f535bcfa5ccef12f5444f15ae5548 was pushed to origin release/v1.5.0-mini-courier and verified with git ls-remote. Scope: OTP delivery, WeChat binding/proxy, approved buyer layout, regression tests, preview ignores. Local mini-program configs, generated tsconfig and unrelated files were excluded.
+Fresh checks passed: OTP and bind runtime tests, buyer responsive contract, mini-program contract, deployment contract, secret scan, typecheck, diff check. Prior final build and lint passed in preceding phase; no new business edits this phase.
+BLOCKED deployment: independent review tool still fails parsing arguments; no independent acceptance occurred. Full browser regression and real production login remain NOT RUN. Production was not connected to or changed; no release tag created. Next: independent review/acceptance of this exact commit, then verified recovery backup, deployment and production checks.
+
 ## 2026-09-06 v1.6.1 发布执行交接
 
 用户已批准推送 GitHub、部署服务器并上传微信平台。候选范围包含小程序手动收货地址、订单评价入口与评价提交页、商品评价摘要和缺货提示，以及发布预检防护。正式 AppID `wx755ca031b1ed8a25` 仅写入隔离上传副本，源码 AppID 保持为空；个人微信配置和其他项目的空私钥不纳入发布。服务器端本轮没有新增源码，计划保留当前已部署镜像，只做生产健康、数据库和队列终检。
