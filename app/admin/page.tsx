@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AdminDashboard from "@/components/admin-dashboard";
 import { currentSession } from "@/lib/session";
 import db from "@/lib/db";
@@ -9,5 +10,5 @@ export default async function AdminPage() {
   if (session.role !== "owner") redirect("/buyer");
   const orderSummary=db.prepare("SELECT COUNT(*) count,COALESCE(SUM(total_amount),0) revenue FROM orders WHERE deleted_at IS NULL").get() as {count:number;revenue:number};
   const customerSummary=db.prepare("SELECT COUNT(*) count FROM users WHERE role='buyer'").get() as {count:number};
-  return <AdminDashboard initialOrderCount={orderSummary.count} initialRevenue={orderSummary.revenue} initialCustomerCount={customerSummary.count}/>;
+  return <><nav className="bg-white px-4 py-2 text-right"><Link href="/admin/reviews" className="text-sm font-semibold text-orange-700">商品评价管理</Link></nav><AdminDashboard initialOrderCount={orderSummary.count} initialRevenue={orderSummary.revenue} initialCustomerCount={customerSummary.count}/></>;
 }

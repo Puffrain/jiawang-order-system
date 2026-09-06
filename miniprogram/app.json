@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/home/home",
+    "pages/product/product",
+    "pages/cart/cart",
+    "pages/messages/messages",
+    "pages/orders/orders",
+    "pages/profile/profile",
+    "pages/points/points",
+    "pages/review/review",
+    "pages/address/address",
+    "pages/courier-login/courier-login",
+    "pages/courier-orders/courier-orders"
+  ],
+  "window": {
+    "navigationBarTitleText": "佳旺订单系统",
+    "navigationBarBackgroundColor": "#111827",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f4f6f8",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
+

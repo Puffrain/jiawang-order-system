@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>佳旺小程序移动端视觉预览</title>
+  <style>
+    :root {
+      --ink: #16202a;
+      --muted: #6f7f8d;
+      --line: #e6eaee;
+      --canvas: #eef1f4;
+      --surface: #ffffff;
+      --orange: #f47721;
+      --orange-dark: #d95813;
+      --orange-soft: #fff0e5;
+      --green: #0d8a62;
+      --amber: #bc7611;
+      --red: #c53e31;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #20272d; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .sheet { max-width: 1680px; margin: 0 auto; padding: 38px 28px 52px; }
+    .intro { color: #f8fafc; max-width: 760px; margin-bottom: 30px; }
+    .intro h1 { margin: 0 0 10px; font-size: 28px; font-weight: 750; }
+    .intro p { margin: 0; color: #c5d0d8; line-height: 1.7; font-size: 15px; }
+    .phones { display: grid; grid-template-columns: repeat(6, minmax(280px, 1fr)); gap: 22px; align-items: start; overflow-x: auto; padding-bottom: 12px; }
+    .device { width: 100%; min-width: 280px; background: #111820; padding: 9px; border-radius: 28px; box-shadow: 0 22px 56px rgba(0,0,0,.3); }
+    .caption { color: #d9e2e9; text-align: center; font-size: 13px; margin: 0 0 10px; }
+    .screen { position: relative; height: 640px; overflow: hidden; border-radius: 21px; background: var(--canvas); }
+    .top { height: 53px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; color: #fff; background: #151d2b; font-size: 14px; font-weight: 700; }
+    .top .back { font-size: 25px; line-height: 1; font-weight: 400; }
+    .top .pill { padding: 5px 9px; border: 1px solid rgba(255,255,255,.65); border-radius: 18px; font-size: 12px; }
+    .content { height: calc(100% - 53px); overflow: hidden; padding: 13px 13px 76px; }
+    .banner { display: block; width: 100%; height: 112px; object-fit: cover; border-radius: 8px; background: #111820; }
+    .merchant { padding: 12px 2px 11px; }
+    .merchant h2, .page-title { margin: 0; font-size: 19px; letter-spacing: 0; }
+    .merchant p, .sub { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .notice { display: flex; gap: 9px; align-items: flex-start; margin: 12px 0 13px; padding: 10px 11px; border: 1px solid #f4d4bc; border-radius: 8px; background: #fffaf6; }
+    .notice-label { flex: 0 0 auto; color: var(--orange-dark); font-size: 12px; font-weight: 800; }
+    .notice-copy { min-width: 0; color: #53616c; font-size: 12px; line-height: 1.45; }
+    .search { display: flex; align-items: center; height: 38px; margin: 12px 0 9px; padding: 0 11px; color: #8c99a3; border: 1px solid #e1e7eb; border-radius: 7px; background: #fff; font-size: 12px; }
+    .search-symbol { margin-right: 7px; font-size: 18px; line-height: 1; }
+    .sorts { display: grid; grid-template-columns: repeat(3, 1fr); height: 34px; border-bottom: 1px solid var(--line); }
+    .sort { position: relative; color: var(--muted); text-align: center; font-size: 11px; font-weight: 700; }
+    .sort.active { color: var(--orange-dark); }
+    .sort.active::after { position: absolute; right: calc(50% - 12px); bottom: 0; left: calc(50% - 12px); height: 2px; border-radius: 2px; background: var(--orange); content: ""; }
+    .catalog { display: grid; grid-template-columns: 78px 1fr; height: 350px; margin: 0 -13px; }
+    .categories { padding-top: 3px; background: #f3f5f7; }
+    .category { min-height: 45px; padding: 14px 6px 8px; color: #70808c; text-align: center; font-size: 11px; }
+    .category.active { padding-left: 3px; color: var(--orange-dark); border-left: 3px solid var(--orange); background: #fff; font-weight: 800; }
+    .products { padding: 0 10px; background: #fff; }
+    .product { display: flex; min-height: 103px; padding: 11px 0; border-bottom: 1px solid #edf0f2; }
+    .product-image { position: relative; display: block; flex: 0 0 80px; width: 80px; height: 80px; object-fit: contain; border-radius: 5px; background: #f1f4f5; }
+    .product-image.placeholder { display: flex; align-items: center; justify-content: center; color: #91a0aa; background: #e7ecef; font-size: 11px; }
+    .product-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 1px 0 0 9px; }
+    .product-name { overflow: hidden; font-size: 13px; font-weight: 720; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+    .product-meta { margin-top: 4px; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .product-bottom { display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; }
+    .price { color: var(--orange-dark); font-size: 17px; font-weight: 800; }
+    .add { display: grid; width: 24px; height: 24px; place-items: center; color: #fff; border-radius: 50%; background: var(--orange); font-size: 20px; line-height: 1; }
+    .nav { position: absolute; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 8px 10px 12px; border-top: 1px solid var(--line); background: rgba(255,255,255,.97); }
+    .nav-item { padding: 6px 2px; color: #768592; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 700; }
+    .nav-item.active { color: var(--orange-dark); background: var(--orange-soft); }
+    .detail-image { width: calc(100% + 26px); height: 236px; margin: -13px -13px 0; object-fit: cover; background: #e7ecef; }
+    .detail-card, .cart-card, .order-card, .address-card { margin-top: 10px; padding: 13px; background: var(--surface); border-radius: 8px; box-shadow: 0 3px 12px rgba(31,42,54,.055); }
+    .detail-name { font-size: 18px; font-weight: 760; line-height: 1.3; }
+    .detail-price { margin-top: 8px; color: var(--orange-dark); font-size: 23px; font-weight: 800; }
+    .label { margin-bottom: 9px; color: var(--muted); font-size: 12px; }
+    .sku-row { display: flex; gap: 7px; flex-wrap: wrap; }
+    .sku { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; color: #4c5a65; font-size: 12px; }
+    .sku.selected { border-color: var(--orange); color: var(--orange-dark); background: var(--orange-soft); }
+    .bottom-action { position: absolute; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: .9fr 1.6fr; gap: 9px; padding: 10px 13px 12px; border-top: 1px solid var(--line); background: #fff; }
+    .button { padding: 11px 8px; border-radius: 7px; text-align: center; font-size: 13px; font-weight: 760; }
+    .button.secondary { color: #46545f; background: #fff; border: 1px solid #d8e0e6; }
+    .button.primary { color: #fff; background: var(--orange); }
+    .tabs { display: flex; gap: 7px; margin: 15px 0 10px; overflow: hidden; }
+    .tab { flex: 1; padding: 7px 2px; color: var(--muted); background: #fff; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 700; }
+    .tab.active { color: var(--orange-dark); background: var(--orange-soft); }
+    .cart-row, .order-top, .address-top { display: flex; justify-content: space-between; gap: 10px; }
+    .thumb { width: 54px; height: 54px; object-fit: cover; border-radius: 6px; background: #edf1f3; }
+    .cart-info { flex: 1; min-width: 0; }
+    .cart-info strong { display: block; font-size: 13px; line-height: 1.35; }
+    .cart-info span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .qty { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .step { padding: 4px 8px; color: var(--orange-dark); background: var(--orange-soft); border-radius: 5px; font-weight: 800; }
+    .summary { margin-top: 12px; padding: 12px; border-radius: 8px; background: #fff; }
+    .summary-line { display: flex; justify-content: space-between; font-size: 13px; }
+    .summary-line strong { color: var(--orange-dark); font-size: 18px; }
+    .order-card { border-left: 3px solid #f4a05e; }
+    .order-card.done { border-left-color: var(--green); }
+    .order-no { font-size: 13px; font-weight: 750; }
+    .status { color: var(--amber); font-size: 11px; font-weight: 760; }
+    .status.green { color: var(--green); }
+    .order-detail { margin: 9px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .order-total { display: flex; justify-content: space-between; font-size: 12px; }
+    .order-total strong { color: var(--orange-dark); font-size: 16px; }
+    .address-card { padding: 15px 13px; }
+    .address-card.primary-address { border: 1px solid #f5bd8d; background: #fffdfb; }
+    .address-name { font-size: 15px; font-weight: 750; }
+    .address-phone { margin-left: 8px; color: var(--muted); font-size: 12px; font-weight: 500; }
+    .address-text { margin-top: 7px; color: #50606c; font-size: 12px; line-height: 1.5; }
+    .address-badge { padding: 4px 6px; color: var(--orange-dark); background: var(--orange-soft); border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .add-address { margin-top: 12px; padding: 12px; color: var(--orange-dark); border: 1px dashed #eda46b; border-radius: 8px; background: #fffaf5; text-align: center; font-size: 13px; font-weight: 750; }
+    .chat-list { height: 404px; overflow: hidden; padding: 12px 0; }
+    .chat-row { display: flex; margin: 12px 0; }
+    .chat-row.mine { justify-content: flex-end; }
+    .chat-bubble { max-width: 78%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #3d4b55; font-size: 12px; line-height: 1.5; }
+    .chat-row.mine .chat-bubble { border-color: #f2bd91; background: var(--orange-soft); }
+    .chat-system { margin: 13px auto; padding: 7px 10px; color: #93621c; border-radius: 6px; background: #fff7df; font-size: 11px; text-align: center; }
+    .chat-time { display: block; margin-top: 5px; color: #9aa6af; font-size: 10px; text-align: right; }
+    .chat-compose { position: absolute; right: 0; bottom: 53px; left: 0; display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: #fff; }
+    .chat-input { flex: 1; padding: 9px 10px; color: #95a1aa; border: 1px solid #dce3e8; border-radius: 6px; background: #f8fafb; font-size: 11px; }
+    .chat-send { padding: 9px 13px; color: #fff; border-radius: 6px; background: var(--orange); font-size: 11px; font-weight: 750; }
+    .note { margin: 13px 2px 0; color: #c5d0d8; font-size: 12px; line-height: 1.6; }
+    @media (max-width: 750px) { .sheet { padding: 20px 14px 32px; } .phones { grid-template-columns: minmax(280px, 340px); justify-content: center; } .intro h1 { font-size: 23px; } }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <header class="intro">
+      <h1>佳旺订单小程序视觉预览</h1>
+      <p>方向：批发订货工具，而不是营销海报。橙色只用于价格、当前状态和主要操作；图片、商品名和结算路径保持第一优先级。</p>
+    </header>
+    <section class="phones">
+      <article class="device">
+        <p class="caption">01 首页</p>
+        <div class="screen">
+          <div class="top"><span>主页</span><span>佳旺商城</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <img class="banner" src="../../miniprogram/assets/brand-banner.jpg" alt="佳旺品牌横幅">
+            <div class="notice"><span class="notice-label">活动通知</span><span class="notice-copy">本周洗护组合下单满 3 件，昆山城区免费配送。</span></div>
+            <div class="search"><span class="search-symbol">⌕</span>搜索商品、品牌或规格</div>
+            <div class="sorts"><div class="sort active">为您推荐</div><div class="sort">销量优先</div><div class="sort">价格</div></div>
+            <div class="catalog"><div class="categories"><div class="category active">全部商品</div><div class="category">洗发护发</div><div class="category">烫染造型</div><div class="category">工具耗材</div></div><div class="products"><div class="product"><div class="product-image placeholder">商品图片</div><div class="product-copy"><div class="product-name">嘉美娜香氛清爽去屑洗发水</div><div class="product-meta">洗发用品 · 库存 997 件</div><div class="product-bottom"><div class="price">¥20</div><div class="add">+</div></div></div></div><div class="product"><div class="product-image placeholder">商品图片</div><div class="product-copy"><div class="product-name">嘉美娜香氛水润丝滑发膜</div><div class="product-meta">护发用品 · 库存 999 件</div><div class="product-bottom"><div class="price">¥20</div><div class="add">+</div></div></div></div><div class="product"><div class="product-image placeholder">商品图片</div><div class="product-copy"><div class="product-name">专业烫染护理组合</div><div class="product-meta">烫染造型 · 库存充足</div><div class="product-bottom"><div class="price">¥68</div><div class="add">+</div></div></div></div></div></div>
+          </div>
+          <div class="nav"><div class="nav-item active">首页</div><div class="nav-item">购物车</div><div class="nav-item">消息</div><div class="nav-item">订单</div><div class="nav-item">我的</div></div>
+        </div>
+      </article>
+      <article class="device">
+        <p class="caption">02 商品详情</p>
+        <div class="screen">
+          <div class="top"><span class="back">‹</span><span>商品详情</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <div class="detail-image product-image placeholder">商品图片</div>
+            <div class="detail-card"><div class="detail-name">嘉美娜香氛清爽去屑洗发水</div><div class="detail-price">¥20.00</div><p class="sub">洗发用品 · 库存充足</p></div>
+            <div class="detail-card"><div class="label">选择规格</div><div class="sku-row"><span class="sku selected">500ml</span><span class="sku">1L</span><span class="sku">整箱装</span></div><div class="qty"><span>购买数量</span><span class="step">− &nbsp; 1 &nbsp; +</span></div></div>
+          </div>
+          <div class="bottom-action"><div class="button secondary">购物车</div><div class="button primary">加入购物车</div></div>
+        </div>
+      </article>
+      <article class="device">
+        <p class="caption">03 购物车</p>
+        <div class="screen">
+          <div class="top"><span class="back">‹</span><span>购物车</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <h1 class="page-title">购物车</h1><p class="sub">确认规格和数量后提交订单</p>
+            <div class="cart-card"><div class="cart-row"><div class="thumb product-image placeholder">商品</div><div class="cart-info"><strong>嘉美娜香氛清爽去屑洗发水</strong><span>500ml · ¥20.00</span></div><strong class="price">¥40</strong></div><div class="qty"><span>数量</span><span class="step">− &nbsp; 2 &nbsp; +</span></div></div>
+            <div class="summary"><div class="summary-line"><span>商品小计</span><strong>¥40.00</strong></div><p class="sub">备注：如需指定送货时间，请在提交订单前填写。</p></div>
+          </div>
+          <div class="bottom-action"><div class="button secondary">继续选购</div><div class="button primary">选择地址并提交</div></div>
+        </div>
+      </article>
+      <article class="device">
+        <p class="caption">04 我的订单</p>
+        <div class="screen">
+          <div class="top"><span>订单</span><span>我的订单</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <h1 class="page-title">我的订单</h1><p class="sub">查看审核、配送和收货进度</p>
+            <div class="tabs"><div class="tab active">全部</div><div class="tab">待处理</div><div class="tab">配送中</div><div class="tab">已完成</div></div>
+            <div class="order-card"><div class="order-top"><span class="order-no">订单号 JW20260901001</span><span class="status">待商家审核</span></div><div class="order-detail">嘉美娜香氛清爽去屑洗发水 × 2<br>下单时间 09-01 10:18</div><div class="order-total"><span>订单金额</span><strong>¥40.00</strong></div></div>
+            <div class="order-card done"><div class="order-top"><span class="order-no">订单号 JW20260829008</span><span class="status green">已完成</span></div><div class="order-detail">护发产品组合 × 4<br>已签收，感谢订购</div><div class="order-total"><span>订单金额</span><strong>¥128.00</strong></div></div>
+          </div>
+          <div class="nav"><div class="nav-item">首页</div><div class="nav-item">购物车</div><div class="nav-item">消息</div><div class="nav-item active">订单</div><div class="nav-item">我的</div></div>
+        </div>
+      </article>
+      <article class="device">
+        <p class="caption">05 收货地址</p>
+        <div class="screen">
+          <div class="top"><span class="back">‹</span><span>收货地址</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <h1 class="page-title">收货地址</h1><p class="sub">下单时选择配送地址</p>
+            <div class="address-card primary-address"><div class="address-top"><div><span class="address-name">张女士</span><span class="address-phone">138****1234</span></div><span class="address-badge">默认</span></div><div class="address-text">江苏省苏州市昆山市玉山镇前进西路 188 号<br>佳旺美发工作室</div></div>
+            <div class="address-card"><div class="address-top"><div><span class="address-name">陈先生</span><span class="address-phone">139****8821</span></div></div><div class="address-text">江苏省苏州市昆山市周市镇青阳北路 66 号</div></div>
+            <div class="add-address">+ 新增收货地址</div>
+          </div>
+          <div class="nav"><div class="nav-item">首页</div><div class="nav-item">购物车</div><div class="nav-item">消息</div><div class="nav-item">订单</div><div class="nav-item active">我的</div></div>
+        </div>
+      </article>
+      <article class="device">
+        <p class="caption">06 消息</p>
+        <div class="screen">
+          <div class="top"><span>消息</span><span>联系商户</span><span class="pill">••• ○</span></div>
+          <div class="content">
+            <h1 class="page-title">消息</h1><p class="sub">与商户沟通订单和商品问题</p>
+            <div class="chat-list"><div class="chat-system">订单 JW20260901001 已由商户审核</div><div class="chat-row"><div class="chat-bubble">您好，洗发水 500ml 今天可以安排配送。<span class="chat-time">10:18</span></div></div><div class="chat-row mine"><div class="chat-bubble">好的，麻烦下午送到门店。<span class="chat-time">10:20</span></div></div><div class="chat-row"><div class="chat-bubble">收到，配送员出发后会更新订单状态。<span class="chat-time">10:21</span></div></div></div>
+          </div>
+          <div class="chat-compose"><div class="chat-input">输入想问商户的问题</div><div class="chat-send">发送</div></div>
+          <div class="nav"><div class="nav-item">首页</div><div class="nav-item">购物车</div><div class="nav-item active">消息</div><div class="nav-item">订单</div><div class="nav-item">我的</div></div>
+        </div>
+      </article>
+    </section>
+    <p class="note">预览稿仅用于确认视觉结构，示例姓名、号码和订单号均为虚构内容；不包含生产用户或订单数据。</p>
+  </main>
+</body>
+</html>

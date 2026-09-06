@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ArrowLeft, LockKeyhole, MessageSquareText, Phone } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const [phone, setPhone] = useState("13806265100");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [code, setCode] = useState("");

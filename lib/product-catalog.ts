@@ -105,7 +105,7 @@ type CatalogSku = { id:string; skuCode:string; specName:string; legacyBasePrice:
 export type CatalogProduct = {
   id:string; name:string; category:string; categoryKey:string; subcategoryKey:string|null; brand:string|null; description:string|null; status:"active"|"inactive";
   warehouseProductId:string|null; warehouseRevision:number|null; warehouseMediaRevision:number|null; warehouseSaleStatus:string|null; archivedAt:string|null; permanentlyHiddenAt:string|null; statusBeforeArchive:string|null; createdAt:string; updatedAt:string;
-  archived:boolean; permanentlyHidden:boolean; images:ProductImage[]; primaryImage:ProductImage|null; skus:CatalogSku[]; totalStock:number; recommendations:Array<{recommendedProductId:string}>; recommendationIds:string[];
+  archived:boolean; permanentlyHidden:boolean; images:ProductImage[]; primaryImage:ProductImage|null; skus:CatalogSku[]; totalStock:number; salesCount:number; recommendations:Array<{recommendedProductId:string}>; recommendationIds:string[];
 };
 
 function listWhere(role:"owner"|"buyer", scope:ProductListScope) {
@@ -119,7 +119,9 @@ export function listProducts(role: "owner" | "buyer", options:{scope?:ProductLis
   const scope=options.scope||"all";
   const products=db.prepare(`SELECT p.id,p.name,p.category,COALESCE(NULLIF(p.category_key,''),lower(trim(p.category))) categoryKey,p.subcategory_key subcategoryKey,p.brand,p.description,p.status,
     p.warehouse_product_id warehouseProductId,p.warehouse_revision warehouseRevision,p.warehouse_media_revision warehouseMediaRevision,p.warehouse_sale_status warehouseSaleStatus,
-    p.archived_at archivedAt,p.permanently_hidden_at permanentlyHiddenAt,p.status_before_archive statusBeforeArchive,p.created_at createdAt,p.updated_at updatedAt
+    p.archived_at archivedAt,p.permanently_hidden_at permanentlyHiddenAt,p.status_before_archive statusBeforeArchive,p.created_at createdAt,p.updated_at updatedAt,
+    COALESCE((SELECT SUM(oi.quantity) FROM order_items oi JOIN orders o ON o.id=oi.order_id
+      WHERE oi.sku_id IN (SELECT id FROM product_skus WHERE product_id=p.id) AND o.payment_status='paid' AND o.refunded_at IS NULL AND o.deleted_at IS NULL),0) salesCount
     FROM products p ${listWhere(role,scope)} ORDER BY p.updated_at DESC,p.id`).all() as Array<Omit<CatalogProduct,"archived"|"permanentlyHidden"|"images"|"primaryImage"|"skus"|"totalStock"|"recommendations"|"recommendationIds">>;
   const imageStmt=db.prepare("SELECT id,mime_type mimeType,byte_size byteSize,sort_order sortOrder,is_primary isPrimary FROM product_images WHERE product_id=? ORDER BY sort_order,id");
   const skuStmt=db.prepare(`SELECT id,sku_code skuCode,spec_name specName,base_price legacyBasePrice,warehouse_base_price warehouseBasePrice,sale_price_override salePriceOverride,
@@ -139,7 +141,7 @@ export function listProducts(role: "owner" | "buyer", options:{scope?:ProductLis
     const imageRows=imageStmt.all(product.id) as Array<Omit<ProductImage,"url">>;
     const images=imageRows.map(image=>({...image,url:`/api/product-images/${image.id}`}));
     const recommendations=recommendationStmt.all(product.id) as Array<{recommendedProductId:string}>;
-    return {...product,archived:Boolean(product.archivedAt),permanentlyHidden:Boolean(product.permanentlyHiddenAt),images,primaryImage:images.find(image=>Boolean(image.isPrimary))||images[0]||null,skus,totalStock:skus.reduce((sum,sku)=>sum+Number(sku.stock),0),recommendations,recommendationIds:recommendations.map(item=>item.recommendedProductId)};
+    return {...product,archived:Boolean(product.archivedAt),permanentlyHidden:Boolean(product.permanentlyHiddenAt),images,primaryImage:images.find(image=>Boolean(image.isPrimary))||images[0]||null,skus,totalStock:skus.reduce((sum,sku)=>sum+Number(sku.stock),0),salesCount:Number(product.salesCount)||0,recommendations,recommendationIds:recommendations.map(item=>item.recommendedProductId)};
   });
 }
 

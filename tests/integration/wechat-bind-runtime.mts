@@ -1,0 +1,35 @@
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+process.env.DATABASE_URL = ":memory:";
+process.env.SESSION_SECRET = randomBytes(32).toString("hex");
+const { default: db } = await import("../../lib/db");
+const { createOtpChallenge, completeOtpDelivery } = await import("../../lib/otp");
+const { POST } = await import("../../app/api/auth/wechat/bind-phone/route");
+const phone = "13800000000";
+const challenge = createOtpChallenge(phone, "wechat_bind");
+completeOtpDelivery(challenge.id, true);
+const request = (ticket: string, code = challenge.code) => new Request("http://localhost/api/auth/wechat/bind-phone", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, loginTicket: ticket, code, challengeId: challenge.id }) });
+const state = () => db.prepare("SELECT consumed_at,attempt_count FROM verification_challenges WHERE id=?").get(challenge.id) as { consumed_at: string | null; attempt_count: number };
+try {
+  assert.equal((await POST(request("expired"))).status, 409);
+  assert.equal(state().consumed_at, null);
+  assert.equal(state().attempt_count, 0);
+  db.prepare("INSERT INTO wechat_login_tickets(id,openid,expires_at) VALUES('valid','test-openid',datetime('now','+5 minutes'))").run();
+  assert.equal((await POST(request("valid", "000000"))).status, 401);
+  assert.equal(state().attempt_count, 1);
+  db.prepare("INSERT INTO users(id,phone,role,status,wechat_openid) VALUES('existing',?,'buyer','active','other-openid')").run(phone);
+  assert.equal((await POST(request("valid"))).status, 409);
+  assert.equal(state().consumed_at, null);
+  db.prepare("UPDATE users SET wechat_openid=NULL WHERE id='existing'").run();
+  db.prepare("INSERT INTO customer_profile(user_id) VALUES('existing')").run();
+  const response = await POST(request("valid"));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(typeof body.sessionToken, "string");
+  assert.ok(response.headers.get("set-cookie"));
+  assert.notEqual(state().consumed_at, null);
+  assert.equal((db.prepare("SELECT wechat_openid FROM users WHERE id='existing'").get() as {wechat_openid: string}).wechat_openid, "test-openid");
+  assert.equal((await POST(request("valid"))).status, 409);
+  console.log("PASS bind-phone runtime: expired ticket, attempt accounting, binding conflict rollback, login/session, replay");
+} finally { db.close(); }

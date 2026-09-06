@@ -101,6 +101,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-ui-preview/**",
+    ".next-review-verify/**",
     "佳旺仓库系统/**",
     "scripts/**/*.cjs",
     "out/**",
@@ -109,6 +111,10 @@ const eslintConfig = defineConfig([
     ".task-runs/**",
     "output/**",
     "data/**",
+    // Native mini-program files use the WeChat CommonJS runtime rather than
+    // the web application's ESM rules. They are checked by the dedicated
+    // mini-program syntax and contract tests.
+    "miniprogram/**",
     "uploads/**",
     "next-env.d.ts",
   ]),

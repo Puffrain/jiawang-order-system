@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizePhone, isPhone } from "@/lib/validation";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { requestIp, sameOrigin } from "@/lib/security";
-import { createOtpChallenge, type OtpPurpose } from "@/lib/otp";
+import { completeOtpDelivery, createOtpChallenge, type OtpPurpose } from "@/lib/otp";
 import { isSmsPreviewMode, sendVerificationSms } from "@/lib/sms";
 import { writeAudit } from "@/lib/audit";
 
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   if (!sameOrigin(request)) return NextResponse.json({ error: "请求来源无效" }, { status: 403 });
   const body = await request.json().catch(() => ({}));
   const phone = normalizePhone(body.phone);
-  const purpose: OtpPurpose = body.purpose === "password_reset" ? "password_reset" : body.purpose === "buyer_register" ? "buyer_register" : "buyer_access";
+  const purpose: OtpPurpose = body.purpose === "password_reset" ? "password_reset" : body.purpose === "buyer_register" ? "buyer_register" : body.purpose === "wechat_bind" ? "wechat_bind" : "buyer_access";
   if (!isPhone(phone)) return NextResponse.json({ error: "请输入正确的手机号" }, { status: 400 });
   const ip = requestIp(request);
   if (!consumeRateLimit(`otp-ip-${purpose}`, ip, 20, 60 * 60) || !consumeRateLimit(`otp-phone-${purpose}`, phone, 6, 60 * 60)) return NextResponse.json({ error: "验证码发送过于频繁，请稍后再试" }, { status: 429 });
@@ -24,7 +24,8 @@ export async function POST(request: Request) {
   }
 
   const result = await sendVerificationSms(phone, challenge.code);
-  if (!result.delivered) return NextResponse.json({ error: result.error || "短信发送失败，请稍后重试" }, { status: 503 });
+  if (!result.delivered) { completeOtpDelivery(challenge.id, false); return NextResponse.json({ error: result.error || "短信发送失败，请稍后重试" }, { status: 503 }); }
+  completeOtpDelivery(challenge.id, true);
 
   try {
     writeAudit({ actorRole: "system", action: `auth.otp.${purpose}.sent`, objectType: "phone", ip, metadata: { purpose } });

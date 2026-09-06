@@ -1,0 +1,13 @@
+<view class="page messages-page">
+  <view class="brand-strip"><view class="brand-name">消息</view><view class="brand-caption">与商户沟通订单和商品问题</view></view>
+  <scroll-view class="message-scroll" scroll-y scroll-into-view="{{scrollIntoView}}">
+    <view wx:if="{{loading}}" class="muted center">正在加载消息...</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <view wx:if="{{!loading && !messages.length}}" class="muted empty-message">暂时没有消息，需要帮助时可以联系商户。</view>
+    <view wx:for="{{messages}}" wx:key="id" id="message-{{item.id}}" class="message-row {{item.isMine ? 'mine' : ''}} {{item.isSystem ? 'system' : ''}}">
+      <view class="message-bubble"><image wx:if="{{item.isImage && item.localImageUrl}}" class="message-image" src="{{item.localImageUrl}}" mode="widthFix" data-url="{{item.localImageUrl}}" bindtap="previewImage"/><view wx:if="{{!item.isImage || !item.localImageUrl}}" class="message-content">{{item.content}}</view><view wx:if="{{item.orderNo}}" class="message-order">订单 {{item.orderNo}}</view><view class="message-time">{{item.createdAt}}</view></view>
+    </view>
+  </scroll-view>
+  <view class="composer"><button class="image-button" aria-label="拍照或选择图片" bindtap="chooseImage" disabled="{{sending}}"><view class="camera-icon"><view class="camera-lens"></view></view></button><input value="{{content}}" bindinput="inputContent" confirm-type="send" bindconfirm="sendMessage" maxlength="1000" placeholder="输入想问商户的问题"/><button class="primary send-button" loading="{{sending}}" disabled="{{sending || !content}}" bindtap="sendMessage">发送</button></view>
+  <view class="mini-nav"><button class="mini-nav-item" bindtap="openHome">首页</button><button class="mini-nav-item" bindtap="openCart">购物车</button><button class="mini-nav-item active">消息</button><button class="mini-nav-item" bindtap="openOrders">订单</button><button class="mini-nav-item" bindtap="openProfile">我的</button></view>
+</view>

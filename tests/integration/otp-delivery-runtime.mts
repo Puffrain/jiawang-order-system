@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+process.env.DATABASE_URL = ":memory:";
+process.env.SESSION_SECRET = randomBytes(32).toString("hex");
+const { default: db } = await import("../../lib/db");
+const { createOtpChallenge: create, completeOtpDelivery: finish, verifyOtpChallenge: verify } = await import("../../lib/otp");
+const phone = "13800000000";
+try {
+  const first = create(phone, "wechat_bind");
+  finish(first.id, true);
+  const failed = create(phone, "wechat_bind");
+  finish(failed.id, false);
+  assert.equal(verify(failed.id, phone, "wechat_bind", failed.code), false);
+  assert.equal(verify(first.id, phone, "wechat_bind", first.code), true);
+  assert.equal(verify(first.id, phone, "wechat_bind", first.code), false);
+  const older = create(phone, "wechat_bind");
+  const newer = create(phone, "wechat_bind");
+  finish(newer.id, true);
+  finish(older.id, true);
+  assert.equal(verify(older.id, phone, "wechat_bind", older.code), false);
+  assert.equal(verify(newer.id, phone, "wechat_bind", newer.code), true);
+  const limited = create(phone, "buyer_access");
+  finish(limited.id, true);
+  for (let i = 0; i < 5; i++) assert.equal(verify(limited.id, phone, "buyer_access", "000000"), false);
+  assert.equal(verify(limited.id, phone, "buyer_access", limited.code), false);
+  const expired = create(phone, "owner_password_reset");
+  finish(expired.id, true);
+  db.prepare("UPDATE verification_challenges SET expires_at='2000-01-01' WHERE id=?").run(expired.id);
+  assert.equal(verify(expired.id, phone, "owner_password_reset", expired.code), false);
+  console.log("PASS OTP delivery: failed resend, one-time, completion order, attempts, expiration");
+} finally { db.close(); }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createOtpChallenge } from "@/lib/otp";
+import { completeOtpDelivery, createOtpChallenge } from "@/lib/otp";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { requestIp, sameOrigin } from "@/lib/security";
 import { isSmsPreviewMode, sendVerificationSms } from "@/lib/sms";
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   try {
     const challenge = createOtpChallenge(phone, "owner_password_reset");
     const result = await sendVerificationSms(phone, challenge.code);
+    completeOtpDelivery(challenge.id, result.delivered);
     if (!result.delivered) return NextResponse.json({ error: result.error }, { status: 503 });
     writeAudit({ action: "auth.admin.password_reset_code.sent", actorRole: "owner", objectType: "phone", ip });
     return NextResponse.json({ ok: true, challengeId: challenge.id, expiresIn: 300, ...(isSmsPreviewMode() ? { developmentCode: result.developmentCode } : {}) });

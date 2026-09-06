@@ -1,7 +1,7 @@
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import db from "@/lib/db";
 
-export type OtpPurpose = "buyer_access" | "buyer_register" | "password_reset" | "owner_password_reset";
+export type OtpPurpose = "buyer_access" | "buyer_register" | "wechat_bind" | "password_reset" | "owner_password_reset";
 
 function secret() {
   const value = process.env.SESSION_SECRET;
@@ -16,7 +16,6 @@ export function createOtpChallenge(phone: string, purpose: OtpPurpose) {
   const id = randomUUID();
   const code = String(randomInt(100000, 1000000));
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-  db.prepare("UPDATE verification_challenges SET consumed_at=CURRENT_TIMESTAMP WHERE phone=? AND purpose=? AND consumed_at IS NULL").run(phone, purpose);
   db.prepare("INSERT INTO verification_challenges (id, phone, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?, ?)").run(id, phone, purpose, digest(id, phone, purpose, code), expiresAt);
   return { id, code, expiresAt, purpose };
 }
@@ -30,6 +29,15 @@ export function verifyOtpChallenge(challengeId: string, phone: string, purpose: 
     const expected = Buffer.from(row.codeHash, "hex");
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return false;
     db.prepare("UPDATE verification_challenges SET consumed_at=CURRENT_TIMESTAMP WHERE id=?").run(challengeId);
+    return true;
+  })();
+}
+export function completeOtpDelivery(challengeId: string, delivered: boolean) {
+  return db.transaction(() => {
+    const row = db.prepare("SELECT phone, purpose, rowid FROM verification_challenges WHERE id=?").get(challengeId) as { phone: string; purpose: OtpPurpose; rowid: number } | undefined;
+    if (!row) return false;
+    if (!delivered) { db.prepare("DELETE FROM verification_challenges WHERE id=? AND consumed_at IS NULL").run(challengeId); return true; }
+    db.prepare("UPDATE verification_challenges SET consumed_at=CURRENT_TIMESTAMP WHERE phone=? AND purpose=? AND consumed_at IS NULL AND rowid<?").run(row.phone, row.purpose, row.rowid);
     return true;
   })();
 }

@@ -1,0 +1,9 @@
+<view class="page">
+  <view class="brand-strip"><view class="brand-name">评价商品</view></view>
+  <view class="card section">
+    <view class="title">{{productName || '订单商品'}}</view>
+    <view class="rating-row"><button wx:for="{{[1,2,3,4,5]}}" wx:key="*this" aria-label="{{item}}星" disabled="{{submitting || submitted}}" class="star {{item <= rating ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseRating">★</button></view>
+    <textarea class="review-input" disabled="{{submitting || submitted}}" maxlength="1000" placeholder="说说商品和配送体验" value="{{content}}" bindinput="onInput"/>
+    <button class="primary submit" loading="{{submitting}}" disabled="{{submitting || submitted}}" bindtap="submit">{{submitted ? '已提交' : submitting ? '提交中' : '提交评价'}}</button>
+  </view>
+</view>

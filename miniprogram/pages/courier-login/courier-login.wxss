@@ -1,0 +1,4 @@
+.login-page .brand-banner { display: none; }
+.login-page .brand-strip { margin-top: 12rpx; }
+.brand-mark { display: flex; align-items: center; justify-content: center; width: 132rpx; height: 132rpx; line-height: 1; margin: 0 auto 36rpx; border-radius: 28rpx; background: var(--jw-brand); color: #fff; font-size: 42rpx; font-weight: 700; box-shadow: 0 12rpx 24rpx rgba(233,104,26,.2); }
+.input { box-sizing: border-box; width: 100%; height: 88rpx; margin-top: 20rpx; padding: 0 24rpx; background: var(--jw-surface-subtle); border: 1rpx solid var(--jw-border); border-radius: 12rpx; text-align: left; }

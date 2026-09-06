@@ -37,7 +37,7 @@ for (const path of routes) {
 const loginProbe = await fetch(new URL("/api/auth/admin/login", baseUrl), {
   method: "POST",
   headers: { "Content-Type": "application/json", Origin: new URL(baseUrl).origin },
-  body: JSON.stringify({ phone: process.env.OWNER_PHONE || "13806265100", password: "configuration-probe-only" }),
+  body: JSON.stringify({ phone: process.env.OWNER_PHONE || "", password: "configuration-probe-only" }),
 });
 const loginBody = await loginProbe.json().catch(() => ({}));
 const ownerConfigured = !(loginProbe.status === 503 && String(loginBody.error || "").includes("尚未初始化"));

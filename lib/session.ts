@@ -10,15 +10,21 @@ export const SESSION_COOKIE = "hs_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
-export async function createSession(userId: string, role: "owner" | "buyer" | "courier", request: Request, response: NextResponse) {
+export async function setSessionCookies(response: NextResponse, token: string, role: "owner" | "buyer" | "courier", expiresAt: string) {
+  const maxAge = Math.max(0, Math.floor((Date.parse(expiresAt) - Date.now()) / 1000));
+  setSessionCookie(response, SESSION_COOKIE, token, maxAge);
+  setSessionCookie(response, AUTH_MARKER_COOKIE, await createAuthMarker(role, Math.floor(Date.parse(expiresAt) / 1000)), maxAge);
+}
+
+export async function createSession(userId: string, role: "owner" | "buyer" | "courier", request: Request, response?: NextResponse) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_SECONDS * 1000).toISOString();
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   db.prepare(`INSERT INTO auth_sessions (id, user_id, token_hash, expires_at, ip_hash, user_agent) VALUES (?, ?, ?, ?, ?, ?)`).run(
     randomUUID(), userId, tokenHash(token), expiresAt, hashNetworkValue(ip), request.headers.get("user-agent")?.slice(0, 300) ?? null,
   );
-  setSessionCookie(response, SESSION_COOKIE, token, SESSION_SECONDS);
-  setSessionCookie(response, AUTH_MARKER_COOKIE, await createAuthMarker(role, Math.floor(Date.now() / 1000) + SESSION_SECONDS), SESSION_SECONDS);
+  if (response) await setSessionCookies(response, token, role, expiresAt);
+  return { token, expiresAt };
 }
 
 export async function currentSession() {

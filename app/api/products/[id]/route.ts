@@ -6,6 +6,7 @@ import { requireApiRole } from "@/lib/auth";
 import db from "@/lib/db";
 import { applyProductLifecycle, getProductDetail, parseProductInput, restoreProduct, saveProduct, setProductRecommendations, uploadRoot, type ProductLifecycleAction } from "@/lib/product-catalog";
 import { requestIp } from "@/lib/security";
+import { getProductReviewSummary } from "@/lib/reviews";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -16,7 +17,7 @@ export async function GET(_: Request, { params }: RouteContext) {
   const { id } = await params;
   const product = getProductDetail(id, auth.session.role);
   return product
-    ? NextResponse.json({ product })
+    ? NextResponse.json({ product: { ...product, reviews: getProductReviewSummary(id) } })
     : NextResponse.json({ error: "商品不存在" }, { status: 404 });
 }
 
