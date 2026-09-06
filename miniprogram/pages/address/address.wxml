@@ -1,1 +1,24 @@
-<view class="page"><view class="brand-strip"><view class="brand-name">收货地址</view><view class="brand-caption">{{onboarding ? '首次使用请先保存一个收货地址' : '下单时选择配送地址'}}</view></view><view class="row section"><view class="title">地址簿</view><button class="ghost add" bindtap="addAddress">微信地址簿</button></view><scroll-view class="address-scroll" scroll-y><view wx:if="{{error}}" class="error">{{error}}</view><view wx:for="{{addresses}}" wx:key="id" class="card address-card" data-id="{{item.id}}" bindtap="choose"><view class="row"><view><text class="recipient">{{item.recipientName}}</text><text class="phone">{{item.phone}}</text></view><text wx:if="{{item.isDefault}}" class="default">默认</text></view><view class="muted address-text">{{item.province}}{{item.city}}{{item.district}}{{item.detail}}</view><view wx:if="{{checkout}}" class="choose-hint">点击使用此地址</view></view><view wx:if="{{!addresses.length && !loading}}" class="muted center">还没有收货地址，请先添加</view></scroll-view><view wx:if="{{!checkout && !onboarding}}" class="mini-nav"><button class="mini-nav-item" bindtap="openHome">首页</button><button class="mini-nav-item" bindtap="openCart">购物车</button><button class="mini-nav-item" bindtap="openMessages">消息</button><button class="mini-nav-item" bindtap="openOrders">订单</button><button class="mini-nav-item active">我的</button></view></view>
+<view class="page">
+  <view class="brand-strip"><view class="brand-name">收货地址</view><view class="brand-caption">{{onboarding ? '首次使用请先保存一个收货地址' : '下单时选择配送地址'}}</view></view>
+  <view class="row section address-heading"><view class="title">地址簿</view><view class="address-actions"><button class="ghost add" bindtap="addAddress">微信地址簿</button><button class="primary add" bindtap="openManual">手动填写</button></view></view>
+  <scroll-view class="address-scroll" scroll-y>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <view wx:for="{{addresses}}" wx:key="id" class="card address-card" data-id="{{item.id}}" bindtap="choose"><view class="row"><view><text class="recipient">{{item.recipientName}}</text><text class="phone">{{item.phone}}</text></view><text wx:if="{{item.isDefault}}" class="default">默认</text></view><view class="muted address-text">{{item.province}}{{item.city}}{{item.district}}{{item.detail}}</view><view wx:if="{{checkout}}" class="choose-hint">点击使用此地址</view></view>
+    <view wx:if="{{!addresses.length && !loading}}" class="muted center">还没有收货地址，请先添加</view>
+  </scroll-view>
+  <view wx:if="{{!checkout && !onboarding}}" class="mini-nav"><button class="mini-nav-item" bindtap="openHome">首页</button><button class="mini-nav-item" bindtap="openCart">购物车</button><button class="mini-nav-item" bindtap="openMessages">消息</button><button class="mini-nav-item" bindtap="openOrders">订单</button><button class="mini-nav-item active">我的</button></view>
+</view>
+<view wx:if="{{manualOpen}}" class="manual-mask" catchtouchmove="noop">
+  <view class="manual-sheet">
+    <view class="row manual-header"><view><view class="manual-title">手动填写地址</view><view class="muted manual-caption">请填写真实收货信息</view></view><button class="close-button" disabled="{{saving}}" bindtap="closeManual">关闭</button></view>
+    <scroll-view scroll-y class="manual-fields">
+      <view class="field"><text>收货人</text><input maxlength="40" placeholder="请输入姓名" data-field="recipientName" value="{{manual.recipientName}}" bindinput="updateManual"/></view>
+      <view class="field"><text>手机号</text><input type="number" maxlength="11" placeholder="请输入11位手机号" data-field="phone" value="{{manual.phone}}" bindinput="updateManual"/></view>
+      <view class="region-fields"><view class="field"><text>省</text><input maxlength="30" placeholder="省份" data-field="province" value="{{manual.province}}" bindinput="updateManual"/></view><view class="field"><text>市</text><input maxlength="30" placeholder="城市" data-field="city" value="{{manual.city}}" bindinput="updateManual"/></view><view class="field"><text>区/县</text><input maxlength="30" placeholder="区县" data-field="district" value="{{manual.district}}" bindinput="updateManual"/></view></view>
+      <view class="field"><text>详细地址</text><textarea maxlength="120" placeholder="街道、门牌号、楼层等" data-field="detail" value="{{manual.detail}}" bindinput="updateManual"/></view>
+      <label class="default-check"><checkbox checked="{{manual.isDefault}}" value="default" bindchange="toggleDefault"/>设为默认地址</label>
+      <view wx:if="{{formError}}" class="error">{{formError}}</view>
+    </scroll-view>
+    <button class="primary save-manual" loading="{{saving}}" disabled="{{saving}}" bindtap="saveManual">{{saving ? '保存中' : '保存地址'}}</button>
+  </view>
+</view>

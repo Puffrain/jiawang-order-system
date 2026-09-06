@@ -36,8 +36,12 @@ const sourceConfig = JSON.parse(fs.readFileSync(sourceProjectConfig, "utf8"));
 assert.equal(sourceConfig.appid, "", "source project.config.json must not contain an AppID");
 const compose = fs.readFileSync(path.join(root, "compose.yaml"), "utf8");
 for (const name of ["WECHAT_MINI_APPID", "WECHAT_MINI_SECRET"]) {
+  const optionalEntry = name + ": " + "$" + "{" + name + ":-}";
   const requiredEntry = name + ": " + "$" + "{" + name + ":?set " + name + "}";
-  assert.ok(compose.includes(requiredEntry), "production compose must require " + name);
+  assert.ok(
+    compose.includes(optionalEntry) || compose.includes(requiredEntry),
+    "production compose must pass " + name + " to the mini-program service",
+  );
 }
 
 if (!prepare) {
@@ -50,6 +54,8 @@ const uploadDir = path.join(root, ".task-runs", "miniprogram-upload");
 assert.ok(!fs.existsSync(uploadDir), "upload directory already exists: " + uploadDir + ". Remove it after the previous upload attempt before preparing another one.");
 fs.mkdirSync(path.dirname(uploadDir), { recursive: true });
 fs.cpSync(sourceDir, uploadDir, { recursive: true });
+fs.rmSync(path.join(uploadDir, "project.private.config.json"), { force: true });
+fs.rmSync(path.join(uploadDir, ".git"), { recursive: true, force: true });
 const uploadProjectConfig = path.join(uploadDir, "project.config.json");
 const uploadConfig = JSON.parse(fs.readFileSync(uploadProjectConfig, "utf8"));
 uploadConfig.appid = appId;

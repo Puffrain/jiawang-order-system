@@ -15,7 +15,7 @@ Page({
   changeQuantity(event) { const next = Math.max(1, Math.min(Number(this.data.selectedSku.stock || 1), this.data.quantity + Number(event.currentTarget.dataset.step))); this.setData({ quantity: next }); },
   addToCart() {
     const sku = this.data.selectedSku;
-    if (!sku) return;
+    if (!sku || Number(sku.stock || 0) <= 0) return wx.showToast({ title: '库存不足，请联系商家', icon: 'none' });
     request('/api/cart', { method: 'POST', data: { skuId: sku.id, quantity: this.data.quantity } }).then(() => wx.showToast({ title: '已加入购物车', icon: 'success' })).catch(error => wx.showToast({ title: error.message, icon: 'none' }));
   },
   openCart() { wx.navigateTo({ url: '/pages/cart/cart' }); }

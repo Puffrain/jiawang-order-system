@@ -48,6 +48,10 @@ const ordersPage = fs.readFileSync(path.join(root, 'miniprogram/pages/orders/ord
 const ordersView = fs.readFileSync(path.join(root, 'miniprogram/pages/orders/orders.wxml'), 'utf8');
 for (const marker of ["paymentAvailable: false", "/api/payments/capabilities", "capabilities.wechat && capabilities.wechat.available"]) if (!ordersPage.includes(marker)) throw new Error('payment availability contract missing ' + marker);
 if (!ordersView.includes("paymentAvailable && item.status === 'pending_payment'")) throw new Error('payment button must be server-capability gated');
+const addressPage = fs.readFileSync(path.join(root, 'miniprogram/pages/address/address.js'), 'utf8');
+const addressView = fs.readFileSync(path.join(root, 'miniprogram/pages/address/address.wxml'), 'utf8');
+for (const marker of ['openManual', 'saveManual', "request('/api/addresses', { method: 'POST'", 'saving']) if (!addressPage.includes(marker)) throw new Error('manual address behavior missing ' + marker);
+for (const marker of ['手动填写', 'data-field="recipientName"', 'data-field="phone"', 'data-field="province"', 'data-field="city"', 'data-field="district"', 'data-field="detail"']) if (!addressView.includes(marker)) throw new Error('manual address field missing ' + marker);
 const homePage = fs.readFileSync(path.join(root, 'miniprogram/pages/home/home.js'), 'utf8');
 const homeView = fs.readFileSync(path.join(root, 'miniprogram/pages/home/home.wxml'), 'utf8');
 const productImages = fs.readFileSync(path.join(root, 'miniprogram/utils/product-image-cache.js'), 'utf8');

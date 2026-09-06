@@ -1,5 +1,32 @@
 # 小程序接入任务状态
 
+## 2026-09-06 v1.6.1 发布执行
+
+- 资源等级：重型。用户已批准推送 GitHub、部署服务器并上传微信平台。
+- 发布范围：小程序手动填写收货地址、已完成订单评价入口、评价提交锁与失败重试、商品评价摘要和缺货提示，以及上传预检防护。
+- 边界：不提交 `miniprogram/project.config.json`、`miniprogram/project.private.config.json`；不使用其他项目或空的上传私钥；不修改生产数据。
+- 当前状态：本地发布门禁已执行，正在提交、推送、服务器终检和微信开发者工具上传。
+
+## 2026-09-06 小程序手动收货地址
+
+- PASS：地址页保留微信地址簿，并新增手动填写入口和底部表单；支持收货人、手机号、省、市、区县、详细地址和默认地址。
+- PASS：复用 `POST /api/addresses`，包含完整性/手机号校验、提交锁、失败重试、保存后刷新和首次引导返回首页。
+- PASS：`node --check miniprogram/pages/address/address.js`、`node scripts/test-manual-address.cjs`、`pnpm run test:miniprogram-contract`、`pnpm run scan:secrets`、`git diff --check`。
+- NOT RUN：尚未在微信开发者工具重新编译并进行真机视觉检查；本轮未提交、未推送、未上传微信平台，也未部署服务器。
+
+## 当前评价候选检查点（2026-09-05）
+
+资源等级：重型。最新证据以 docs/review-phase-status.md 的 Current Candidate 为准。Web、小程序评价入口与后台评价工作台已接入；新输出目录生产构建 74 页面通过，匿名接口 401、管理页跳登录、独立库健康 200。仍未完成登录后业务测试、跨端视觉验收、独立验收及旧版本清理，因此尚不可宣称完整上线验收通过。预览 http://127.0.0.1:3107；未提交、推送或部署。
+
+## 2026-09-05 跨端视觉系统与库存展示候选
+
+- PASS：新增并落地跨端视觉规范 `docs/design-system.md`，Web 使用 `app/globals.css` token，小程序使用 `miniprogram/app.wxss` token；统一佳旺橙色、浅灰页面、白色内容面、语义状态色、边框、阴影、焦点态和触控尺寸。
+- PASS：Web 买家端商品/详情、订单、消息和后台工作台保留现有接口、字段、权限、路由和下单流程；库存数量不展示给买家，库存不足显示“库存不足，联系商家”，服务端库存校验不变。
+- PASS：小程序客户登录和配送员登录移除顶部大图占位，改为“佳旺”品牌标识；商品首页补齐通知、搜索、销量优先、分类/商品独立滚动和缺货提示；商品详情、评价、配送订单页统一状态和操作样式。
+- PASS：`pnpm run typecheck`、`pnpm run lint`（0 error，4 条既有 warning）、`pnpm run test:miniprogram-contract`、全部小程序 JavaScript `node --check`、`pnpm run scan:secrets`、`pnpm run test:deployment-config`、`pnpm exec next build --webpack`、`git diff --check`。
+- NOT RUN：尚未在微信开发者工具重新编译并逐页视觉抽检，也未完成真实微信登录、图片鉴权、消息双向同步和支付联调；这些需要用户工具和平台环境。
+- BOUNDARY：本轮未部署、未提交、未推送 GitHub；用户的 `miniprogram/project.config.json` 与 `miniprogram/project.private.config.json` 保持原样且不纳入发布。
+
 ## 2026-09-01 v1.5.2 后台订单与消息工作台发布
 
 - PASS：后台订单管理可按订单号、客户名和手机号搜索；列表在固定高度内纵向滚动，桌面表头保持可见，订单详情抽屉继续独立滚动。
