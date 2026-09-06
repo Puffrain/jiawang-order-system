@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizePhone, isPhone } from "@/lib/validation";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { requestIp, sameOrigin } from "@/lib/security";
-import { createOtpChallenge, type OtpPurpose } from "@/lib/otp";
+import { completeOtpDelivery, createOtpChallenge, type OtpPurpose } from "@/lib/otp";
 import { isSmsPreviewMode, sendVerificationSms } from "@/lib/sms";
 import { writeAudit } from "@/lib/audit";
 
@@ -24,7 +24,8 @@ export async function POST(request: Request) {
   }
 
   const result = await sendVerificationSms(phone, challenge.code);
-  if (!result.delivered) return NextResponse.json({ error: result.error || "短信发送失败，请稍后重试" }, { status: 503 });
+  if (!result.delivered) { completeOtpDelivery(challenge.id, false); return NextResponse.json({ error: result.error || "短信发送失败，请稍后重试" }, { status: 503 }); }
+  completeOtpDelivery(challenge.id, true);
 
   try {
     writeAudit({ actorRole: "system", action: `auth.otp.${purpose}.sent`, objectType: "phone", ip, metadata: { purpose } });

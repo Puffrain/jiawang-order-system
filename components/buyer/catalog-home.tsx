@@ -65,7 +65,7 @@ export default function CatalogHome({ products, notices, onAdded }: { products: 
       <aside data-buyer-catalog-sidebar className="overflow-y-auto bg-slate-50 lg:rounded-lg lg:border lg:bg-white lg:py-2">
         {secondaryItems.map((item) => <button key={item} onClick={() => setSecondary(item)} className={"relative block min-h-14 w-full px-2 py-4 text-sm lg:text-left " + (secondary === item ? "bg-white font-bold text-slate-900 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r before:bg-orange-500 lg:bg-orange-50" : "text-slate-600")}>{item === "all" ? "全部" : item}</button>)}
       </aside>
-      <section data-buyer-product-list className="min-w-0 overflow-y-auto bg-white lg:grid lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
+      <section data-buyer-product-list className="min-w-0 overflow-y-auto bg-white lg:grid lg:auto-rows-max lg:content-start lg:grid-cols-2 lg:items-start lg:gap-5 xl:grid-cols-3">
         {filtered.map((product) => <ProductRow key={product.id} product={product} adding={adding === product.id} add={() => void add(product)} />)}
         {!filtered.length && <div className="grid h-64 place-items-center px-5 text-sm text-slate-400 lg:col-span-full">没有符合条件的商品</div>}
       </section>

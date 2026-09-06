@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-ui-preview/
 /.next-review-verify/
 /out/
 

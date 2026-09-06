@@ -101,6 +101,7 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-ui-preview/**",
     ".next-review-verify/**",
     "佳旺仓库系统/**",
     "scripts/**/*.cjs",

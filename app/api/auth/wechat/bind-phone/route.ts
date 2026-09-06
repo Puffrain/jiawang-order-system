@@ -17,11 +17,11 @@ export async function POST(request: Request) {
   const ip = requestIp(request);
   if (!ticketId || !isPhone(phone) || !isSixDigitCode(code) || !challengeId) return NextResponse.json({ error: "手机号或验证码无效" }, { status: 400 });
   if (!consumeRateLimit("wechat-bind-verify", `${ip}:${phone}`, 10, 15 * 60)) return NextResponse.json({ error: "验证次数过多，请稍后重试" }, { status: 429 });
-  if (!verifyOtpChallenge(challengeId, phone, "wechat_bind", code)) return NextResponse.json({ error: "验证码无效或已过期" }, { status: 401 });
   try {
     const result = db.transaction(() => {
       const ticket = db.prepare("SELECT openid FROM wechat_login_tickets WHERE id=? AND consumed_at IS NULL AND datetime(expires_at)>CURRENT_TIMESTAMP").get(ticketId) as { openid: string } | undefined;
       if (!ticket) throw new Error("TICKET_INVALID");
+      if (!verifyOtpChallenge(challengeId, phone, "wechat_bind", code)) return null;
       const openidOwner = db.prepare("SELECT id FROM users WHERE wechat_openid=?").get(ticket.openid) as { id: string } | undefined;
       if (openidOwner) throw new Error("OPENID_BOUND");
       let user = db.prepare("SELECT id,status FROM users WHERE phone=? AND role='buyer'").get(phone) as { id: string; status: string } | undefined;
@@ -33,10 +33,14 @@ export async function POST(request: Request) {
         db.prepare("INSERT INTO customer_profile(user_id) VALUES(?)").run(id);
         user = { id, status: "active" };
         created = true;
-      } else db.prepare("UPDATE users SET wechat_openid=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND wechat_openid IS NULL").run(ticket.openid, user.id);
+      } else {
+        const updated = db.prepare("UPDATE users SET wechat_openid=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND wechat_openid IS NULL").run(ticket.openid, user.id);
+        if (updated.changes !== 1) throw new Error("OPENID_BOUND");
+      }
       db.prepare("UPDATE wechat_login_tickets SET consumed_at=CURRENT_TIMESTAMP WHERE id=?").run(ticketId);
       return { userId: user.id, created };
     })();
+    if (!result) return NextResponse.json({ error: "验证码无效或已过期" }, { status: 401 });
     const session = await createSession(result.userId, "buyer", request);
     const response = NextResponse.json({ ok: true, role: "buyer", sessionToken: session.token, expiresIn: 60 * 60 * 24 * 30, created: result.created, profile: buyerProfile(result.userId) }, { headers: { "Cache-Control": "no-store" } });
     await setSessionCookies(response, session.token, "buyer", session.expiresAt);

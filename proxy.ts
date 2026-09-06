@@ -12,6 +12,8 @@ function withSecurity(response: NextResponse) {
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  // This pre-login endpoint verifies a short-lived WeChat ticket and SMS OTP.
+  if (pathname === "/api/auth/wechat/bind-phone") return withSecurity(NextResponse.next());
   const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
   const bearerToken = bearer || "";
   const bearerApi = Boolean(bearerToken && bearerToken.length <= 512 && pathname.startsWith("/api/"));

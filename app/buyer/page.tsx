@@ -254,11 +254,11 @@ export default function BuyerPage() {
     setTour(false);
   };
   const desktopWidth =
-    tab === "home" ? "lg:max-w-[1440px]" : "lg:max-w-[760px]";
+    tab === "home" ? "lg:max-w-[1440px]" : "lg:max-w-[1120px]";
   return (
     <main className="mobile-safe-screen bg-slate-100 py-0 sm:py-8 lg:px-6 lg:py-10">
       <div
-        className={`mobile-safe-screen relative mx-auto w-full max-w-[460px] overflow-hidden bg-[#f7f8fb] shadow-2xl sm:min-h-[860px] sm:rounded-[32px] sm:border-[7px] sm:border-slate-900 lg:rounded-none lg:border-0 lg:shadow-xl ${desktopWidth}`}
+        className={`mobile-safe-screen relative mx-auto w-full min-w-0 bg-[#f7f8fb] ${desktopWidth}`}
       >
         <header className="sticky top-0 z-20 bg-white px-4 py-4 shadow-sm lg:px-8 lg:py-5">
           <div className="flex min-w-0 items-center gap-3">
@@ -288,7 +288,7 @@ export default function BuyerPage() {
             </button>
           )}
         </header>
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto grid w-full max-w-[460px] grid-cols-5 border-t bg-white px-1 pt-2 sm:absolute lg:static lg:max-w-none lg:border-t-0 lg:border-b lg:px-8 lg:py-3 lg:shadow-sm">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto grid w-full grid-cols-5 border-t bg-white px-1 pt-2 lg:static lg:max-w-none lg:border-t-0 lg:border-b lg:px-8 lg:py-3 lg:shadow-sm">
           <Nav
             icon={Home}
             label="首页"
