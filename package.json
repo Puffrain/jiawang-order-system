@@ -28,6 +28,7 @@
     "test:cross-system": "node tests/integration/cross-system-sync-contract.mjs",
     "test:product-archive-sync": "node tests/integration/product-archive-sync-contract.mjs",
     "test:chat-order-navigation": "node tests/integration/chat-order-navigation-contract.mjs",
+    "test:buyer-responsive-layout": "node tests/integration/buyer-responsive-layout-contract.mjs",
     "test:loyalty": "node --import tsx tests/integration/loyalty-ledger.mjs",
     "test:warehouse-projection": "node --import tsx tests/integration/warehouse-projection-runtime.mts",
     "test:warehouse-media": "node --import tsx tests/integration/warehouse-media-concurrency-runtime.mts",

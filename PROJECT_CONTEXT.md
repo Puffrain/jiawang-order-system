@@ -8,4 +8,6 @@
 
 每次生产发布前必须有全新临时卷预览、独立审查、验收报告和老板对该候选版的明确批准。
 
+每次任务结束必须留下精简概要，至少记录老板最新要求、实际改动、验证证据、未完成事项、风险和下一步。后续智能体接管时按 `HANDOFF.md`、`TASK_STATE.md`、`WORKING_SET.md`、`DECISIONS.md`、`PROJECT_CONTEXT.md`、`PLANS.md` 的最小接管包读取，不要求老板重复说明已确认事项。
+
 源码公开托管于 `https://github.com/Puffrain/jiawang-order-system`，采用 MIT License。公开仓库不包含生产数据库、媒体、客户资料、备份、环境文件、证书或凭据；`main` 启用 CI、一次审批、禁止强推和禁止删除的分支保护。
