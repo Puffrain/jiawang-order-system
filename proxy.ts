@@ -30,7 +30,10 @@ export async function proxy(request: NextRequest) {
   // 该接口只接收一次性 code，并由微信服务端校验，因此不适用网页 CSRF 来源检查。
   const isWechatLogin = pathname === "/api/auth/wechat/login";
   const isWechatCallback = pathname === "/api/payments/wechat/notify" || pathname === "/api/payments/wechat/refund-notify";
-  if (pathname.startsWith("/api/") && !isWechatLogin && !isWechatCallback && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+  // Bearer-authenticated API clients (the native mini program) do not use
+  // browser cookies, so browser CSRF origin checks do not apply to them. The
+  // injected session cookie is still validated below by the normal auth path.
+  if (!bearerApi && pathname.startsWith("/api/") && !isWechatLogin && !isWechatCallback && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     if (requestHeaders.get("sec-fetch-site") === "cross-site") return withSecurity(NextResponse.json({ error: "请求来源无效" }, { status: 403 }));
     const origin = requestHeaders.get("origin");
     const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");

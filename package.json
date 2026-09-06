@@ -14,6 +14,7 @@
     "validate:compose-build": "node scripts/validate-compose-build.mjs",
     "test:deployment-config": "node scripts/deployment-config-smoke.mjs",
     "test:miniprogram-contract": "node scripts/miniprogram-contract.mjs",
+    "test:miniprogram-bearer-csrf": "node tests/integration/miniprogram-bearer-csrf-contract.mjs",
     "miniprogram:preflight": "node scripts/miniprogram-release-preflight.mjs",
     "miniprogram:prepare-upload": "node scripts/miniprogram-release-preflight.mjs --prepare",
     "scan:secrets": "node scripts/scan-secrets.mjs",
